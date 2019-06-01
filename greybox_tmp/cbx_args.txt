@@ -13,5 +13,4 @@ WIDTH_BYTEENA_A=1
 DEVICE_FAMILY="Cyclone IV E"
 address_a
 clock0
-rden_a
 q_a
