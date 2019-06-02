@@ -41,7 +41,7 @@ module memory_slave#(
         .data_bus_serial(data_bus_serial)
     );
 
-    ram_2k(
+    ram_2k ram_inst(
         .address(addr_out),
         .clock(clk),
         .data(data_out_parellel),

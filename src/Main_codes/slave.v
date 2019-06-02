@@ -12,11 +12,11 @@ module slave #(
     parameter DATA_WIDTH = 8
 )(
     input [ADDRESS_WIDTH - 1:0] addr_in,
-    input clk, rstn, write_en,
+    input clk, rstn, rd_wrt,
     input [DATA_WIDTH - 1:0] data_in_parellel,
 
-    output reg ready, done, write_en_internal,
-    output reg [DATA_WIDTH - 1:0] data_out_parellel,
+    output reg ready = 1'b0, done = 1'b0, write_en_internal = 1'b0, //make done bidirectional
+    output wire [DATA_WIDTH - 1:0] data_out_parellel,
     output wire [ADDRESS_WIDTH -1:0] addr_out,
 
     inout data_bus_serial
@@ -59,6 +59,7 @@ module slave #(
 
     // assignments
     assign addr_out = addr_in & {ADDRESS_WIDTH{addr_valid}};
+    assign data_out_parellel = parellel_out_buff;
 
     // main execution
     always @(posedge clk, negedge rstn) begin
@@ -66,7 +67,6 @@ module slave #(
             //reset logic
             ready                   <= 1'b0;
             done                    <= 1'b0;
-            data_out_parellel       <= {DATA_WIDTH{1'b0}};
             serial_out_enable       <= 1'b0;
             state                   <= IDLE;
             parellel_out_buff       <= {DATA_WIDTH{1'b0}};
@@ -79,22 +79,23 @@ module slave #(
             case(state)
 
                 IDLE: begin
-                    if (addr_valid & write_en) state <= WRITE_FETCH;
+                // need util line?
+                    if (addr_valid & rd_wrt) state <= WRITE_FETCH;
                     else if (addr_valid) state <= READ_FETCH;
                 end
 
                 WRITE_FETCH: begin
-                    if (serial_data_counter < DATA_WIDTH) begin
-                        parellel_out_buff   <= parellel_out_buff & (data_bus_serial << serial_data_counter);
-                        serial_data_counter <= serial_data_counter + 1;
 
-                    end else begin
-                        state <= WRITE_EXEC;
-                    end
+                    parellel_out_buff[serial_data_counter]  <= data_bus_serial;
+                    serial_data_counter                     <= serial_data_counter + 1;
+                    // pull up data bus
+
+                    if (serial_data_counter == DATA_WIDTH - 1) state <= WRITE_EXEC;
                 end
 
                 WRITE_EXEC: begin
                     write_en_internal   <= 1'b1;
+                    // add done 
                     state               <= CLEANUP;  
                 end
 
@@ -109,14 +110,13 @@ module slave #(
                 end
 
                 SERIAL_TX: begin
-                    ready <= 1'b0;
+                    ready                   <= 1'b0;
+                    serial_out_enable       <= 1'b1;
+                    serial_out_buff         <= parellel_in_buff[serial_data_counter];
+                    serial_data_counter     <= serial_data_counter + 1;
 
-                    if (serial_data_counter < DATA_WIDTH) begin
-                        serial_out_buff         <= parellel_in_buff[serial_data_counter];
-                        serial_data_counter     <= serial_data_counter + 1;
-
-                    end else begin
-                        state <= IDLE;
+                    if (serial_data_counter == DATA_WIDTH - 1) begin
+                        state <= CLEANUP;
                         done <= 1'b1;
                     end
                 end
@@ -128,6 +128,7 @@ module slave #(
                     serial_data_counter     <= {DATA_WIDTH_LOG{1'b0}};
                     done                    <= 1'b0;
                     write_en_internal       <= 1'b0;
+                    serial_out_enable       <= 1'b0;
                     state                   <= IDLE;
                 end
             endcase
@@ -135,3 +136,11 @@ module slave #(
     end
 
 endmodule 
+
+// modelsim force vals
+/*
+force -freeze sim:/slave/addr_in 0 0
+force -freeze sim:/slave/clk 1 0, 0 {50 ps} -r 100
+force -freeze sim:/slave/rstn 1 0
+force -freeze sim:/slave/rd_wrt 1 0
+force -freeze sim:/slave/data_in_parellel 0 0*/
