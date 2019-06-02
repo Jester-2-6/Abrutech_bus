@@ -6,15 +6,35 @@ Organization : ABruTECH
 Description  : Master module of the bus
 */
 
-module #()serial_parallel(
+module serial_parallel(
     clk,
     rstn,
     din,
-    dv_in,
     dout,
     dv_out,
-    bit_lngt,
+    bit_lngth,
     en
 );
 
+// Parameters
+PORT_WIDTH = 14;
+BIT_LENGTH = 4;
+
+
+// Port declaration
+input                        clk;
+input                        rstn;
+input                        din;
+input  wire [BIT_LENGTH-1:0] bit_lngth;
+input                        en;
+output reg                   dv_out = 1'b0;
+output reg [PORT_WIDTH-1:0]  dout;
+
+// Internal registers and wires
+reg [] counter = {BIT_LENGTH{1'b0}};
+
 endmodule
+
+/*
+if en low dont do anything except reset
+*/
