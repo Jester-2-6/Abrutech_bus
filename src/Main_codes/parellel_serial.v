@@ -7,7 +7,7 @@ Description  : parellel serial converter
 */
 
 module #(
-    parameter parellel_port_width
+    parameter parellel_port_width = 14
 )parallel_serial(
     input clk, rstn, dv_in,
     input [parellel_port_width - 1:0] din, 
