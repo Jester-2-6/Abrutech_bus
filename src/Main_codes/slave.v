@@ -136,11 +136,3 @@ module slave #(
     end
 
 endmodule 
-
-// modelsim force vals
-/*
-force -freeze sim:/slave/addr_in 0 0
-force -freeze sim:/slave/clk 1 0, 0 {50 ps} -r 100
-force -freeze sim:/slave/rstn 1 0
-force -freeze sim:/slave/rd_wrt 1 0
-force -freeze sim:/slave/data_in_parellel 0 0*/
