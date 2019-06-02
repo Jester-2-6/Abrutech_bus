@@ -1,3 +1,10 @@
+/*
+Module name  : controller_top.v
+Author 	     : C.Wimalasuriya
+Date Modified: 01/06/2019
+Organization : ABruTECH
+Description  : controller module of the bus
+*/
 module controller_top(
     input [3:0] p1_master_port,
     input [3:0] p2_master_port,
