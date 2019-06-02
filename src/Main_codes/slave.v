@@ -33,7 +33,7 @@ module slave #(
     localparam DATA_WIDTH_LOG = $clog2(DATA_WIDTH);
 
     wire addr_valid;
-    reg [2:0] state;
+    reg [2:0] state = IDLE;
 
     reg serial_out_enable                              = 1'b0;
     reg serial_out_buff                                = 1'b0;
