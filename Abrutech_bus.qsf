@@ -38,7 +38,7 @@
 
 set_global_assignment -name FAMILY "Cyclone IV E"
 set_global_assignment -name DEVICE EP4CE115F29C7
-set_global_assignment -name TOP_LEVEL_ENTITY memory_slave
+set_global_assignment -name TOP_LEVEL_ENTITY parallel_serial_tb
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 18.1.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "18:27:50  MAY 31, 2019"
 set_global_assignment -name LAST_QUARTUS_VERSION "18.1.0 Lite Edition"
@@ -54,6 +54,8 @@ set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (Verilog)"
 set_global_assignment -name EDA_OUTPUT_DATA_FORMAT "VERILOG HDL" -section_id eda_simulation
 set_location_assignment PIN_AB28 -to b
 set_location_assignment PIN_G19 -to out
+set_global_assignment -name VERILOG_FILE src/Main_codes/parallel_serial_tb.v
+set_global_assignment -name VERILOG_FILE src/Main_codes/parallel_serial.v
 set_global_assignment -name VERILOG_FILE src/Main_codes/memory_slave.v
 set_global_assignment -name VERILOG_FILE src/Main_codes/master.v
 set_global_assignment -name VERILOG_FILE src/Main_codes/addr_in_range.v
