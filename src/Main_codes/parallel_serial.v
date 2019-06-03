@@ -7,7 +7,7 @@ Description  : parallel serial converter
 */
 
 module parallel_serial #(
-    parameter PARALLEL_PORT_WIDTH = 14,
+    parameter PARALLEL_PORT_WIDTH = 15,
     parameter BIT_LENGTH = 4
 )(
     input clk, rstn, dv_in,
