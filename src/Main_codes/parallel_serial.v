@@ -10,11 +10,12 @@ module parallel_serial #(
     parameter PARALLEL_PORT_WIDTH = 15,
     parameter BIT_LENGTH = 4
 )(
-    input clk, rstn, dv_in,
+    input clk, rstn, dv_in, 
     input [PARALLEL_PORT_WIDTH - 1:0] din, 
-    input [BIT_LENGTH - 1:0] bit_lngt,
+    input [BIT_LENGTH - 1:0] bit_length,
     
-    output reg dout = 1'bZ
+    output reg dout = 1'bZ,
+    output reg data_sent = 1'b0
 );  
     localparam IDLE         = 2'd0;
     localparam START        = 2'd1;
@@ -36,6 +37,7 @@ module parallel_serial #(
             case(state)
             IDLE: begin
                 dout                <= 1'bZ;
+                data_sent           <= 1'b0;
                 if (dv_in) begin
                     state           <= START;
                     serial_buffer   <= din;
@@ -51,10 +53,11 @@ module parallel_serial #(
                 dout <= serial_buffer[serial_tx_counter];
                 serial_tx_counter <= serial_tx_counter + 1;
 
-                if (serial_tx_counter == bit_lngt - 1) begin
+                if (serial_tx_counter == bit_length - 1) begin
                     state <= IDLE;
                     serial_buffer <= {PARALLEL_PORT_WIDTH{1'b0}};
                     serial_tx_counter <= {BIT_LENGTH{1'b0}};
+                    data_sent <= 1'b1;
                 end
             end
             endcase
