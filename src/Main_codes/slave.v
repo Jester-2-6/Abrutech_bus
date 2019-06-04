@@ -27,7 +27,7 @@ module slave #(
     localparam ADDR_READ           = 4'd4 ;
     localparam ADDR_ACK            = 4'd5 ;
     localparam RX_DATA_FROM_MS     = 4'd6 ;
-    localparam RX_DATA_ACK         = 4'd7 ;
+    localparam TX_DATA_ACK         = 4'd7 ;
     localparam BUSY_WRT_TO_MEM     = 4'd8 ;
     localparam BUSY_RD_FROM_MEM    = 4'd9 ;
     localparam DATA_READY          = 4'd10;
@@ -70,7 +70,7 @@ module slave #(
 
     // tristate buffers
     assign parallel_port_wire = data_dir_inv_s2p ? parallel_buff : {ADDRESS_WIDTH{1'bZ}};
-    assign slave_busy = slave_busy_reg ? 1'b1 : serial_buff;
+    assign slave_busy = slave_busy_reg ? 1'b1 : 1'bZ;
 
     // main execution
     always @(posedge clk, negedge rstn) begin
@@ -157,13 +157,13 @@ module slave #(
                     if (serial_dv) begin
                         serial_rx_enable    <= 1'b0;
                         data_out_parellel   <= parallel_port_wire;
-                        state               <= RX_DATA_ACK;
+                        state               <= TX_DATA_ACK;
                         write_en_internal   <= 1'b1;
                         serial_rx_enable    <= 1'b0;
                     end
                 end
 
-                RX_DATA_ACK: begin
+                TX_DATA_ACK: begin
                     case (ack_counter)
                         1'b0: begin
                             serial_buff         <= 1'b0;

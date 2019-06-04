@@ -79,23 +79,39 @@ initial begin
 
     #10
     data_bus_serial <= 1'b0;
-    rd_wrt <= 1;
+    data_in_parellel <= 8'd159;
 
     #10
     data_bus_serial <= 1'b1;
 
     #300
     module_dv = 1'b1;
+    data_bus_serial <= 1'bZ;
     
     #10
     module_dv = 1'b0;
 
+    #20
+    slave_busy = 1'b0;
+
+    #10
+    slave_busy = 1'b1;
+
+    #10
+    slave_busy = 1'b0;
+
     #100
     data_bus_serial <= 1'b0;
+    rd_wrt <= 1;
 
-    
     #10
     data_bus_serial <= 1'b1;
+
+    #600
+    module_dv = 1'b1;
+
+    #10
+    module_dv = 1'b0;
 
 end
 
