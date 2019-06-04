@@ -57,7 +57,7 @@ begin
                     dv_out  <= 1'b0;
                     STATE   <= IDLE;
                 end else begin
-                    dout[counter] <= din;
+                    dout[(PORT_WIDTH-1)-counter] <= din;
                     counter       <= counter+1'b1;
                     if(counter == bit_length-1)
                     begin

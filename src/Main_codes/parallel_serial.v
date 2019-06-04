@@ -39,8 +39,9 @@ module parallel_serial #(
                     dout                <= 1'bZ;
                     data_sent           <= 1'b0;
                     if (dv_in) begin
-                        state           <= START;
-                        serial_buffer   <= din;
+                        state             <= START;
+                        serial_buffer     <= din;
+                        serial_tx_counter <= bit_length-1'b1;
                     end
                 end
 
@@ -53,12 +54,12 @@ module parallel_serial #(
                     if (bit_length == 0) state <= IDLE;
                     else begin
                         dout <= serial_buffer[serial_tx_counter];
-                        serial_tx_counter <= serial_tx_counter - 1;
+                        serial_tx_counter <= serial_tx_counter - 1'b1;
 
                         if (serial_tx_counter == 0) begin
                             state <= IDLE;
                             serial_buffer <= {PARALLEL_PORT_WIDTH{1'b0}};
-                            serial_tx_counter <= {BIT_LENGTH{1'b0}};
+                            //serial_tx_counter <= {BIT_LENGTH{1'b0}};
                             data_sent <= 1'b1;
                         end
                     end
