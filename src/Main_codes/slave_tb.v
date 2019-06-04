@@ -38,7 +38,7 @@ slave #(
 
     .write_en_internal(write_en_internal),
     .data_out_parellel(data_out_parellel),
-    .addr_out(addr_out)
+    .addr_buff(addr_out)
 );
 
 initial begin
@@ -82,7 +82,20 @@ initial begin
     rd_wrt <= 1;
 
     #10
-    data_bus_serial <= 
+    data_bus_serial <= 1'b1;
+
+    #300
+    module_dv = 1'b1;
+    
+    #10
+    module_dv = 1'b0;
+
+    #100
+    data_bus_serial <= 1'b0;
+
+    
+    #10
+    data_bus_serial <= 1'b1;
 
 end
 

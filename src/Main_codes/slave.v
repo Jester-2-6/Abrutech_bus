@@ -15,22 +15,24 @@ module slave #(
 
     output reg write_en_internal = 1'b0, //make done bidirectional
     output reg [DATA_WIDTH - 1:0] data_out_parellel = {DATA_WIDTH{1'b0}},
-    output wire [ADDRESS_WIDTH -1:0] addr_out,
+    output reg [ADDRESS_WIDTH -1:0] addr_buff              = {ADDRESS_WIDTH{1'b0}},
 
     inout data_bus_serial, slave_busy
 );
 
-    localparam IDLE                = 4'd0;
-    localparam MATCH_SID1          = 4'd1;
-    localparam MATCH_SID2          = 4'd2;
-    localparam WAIT_FOR_PEER       = 4'd3;
-    localparam ADDR_READ           = 4'd4;
-    localparam RX_DATA_FROM_MS     = 4'd5;
-    localparam BUSY_WRT_TO_MEM     = 4'd6;
-    localparam BUSY_RD_FROM_MEM    = 4'd7;
-    localparam DATA_READY          = 4'd8;
-    localparam TX_DATA_TO_MS       = 4'd9;
-    localparam CLEANUP             = 4'd10;
+    localparam IDLE                = 4'd0 ;
+    localparam MATCH_SID1          = 4'd1 ;
+    localparam MATCH_SID2          = 4'd2 ;
+    localparam WAIT_FOR_PEER       = 4'd3 ;
+    localparam ADDR_READ           = 4'd4 ;
+    localparam ADDR_ACK            = 4'd5 ;
+    localparam RX_DATA_FROM_MS     = 4'd6 ;
+    localparam RX_DATA_ACK         = 4'd7 ;
+    localparam BUSY_WRT_TO_MEM     = 4'd8 ;
+    localparam BUSY_RD_FROM_MEM    = 4'd9 ;
+    localparam DATA_READY          = 4'd10;
+    localparam TX_DATA_TO_MS       = 4'd11;
+    localparam CLEANUP             = 4'd12;
 
     localparam DATA_WIDTH_LOG = $clog2(DATA_WIDTH);
 
@@ -38,15 +40,15 @@ module slave #(
     wire [ADDRESS_WIDTH - 1:0] parallel_port_wire;
 
     reg serial_rx_enable        = 1'b0;
-    reg serial_decoder_access   = 1'b0;
     reg serial_tx_start         = 1'b0;
     reg data_dir_inv_s2p        = 1'b0;
     reg slave_busy_reg          = 1'b0;
     reg slave_match_reg         = 1'b0;
+    reg ack_counter             = 1'b0;
+    reg serial_buff             = 1'bZ;
 
     reg [DATA_WIDTH - 1:0] read_width               = {DATA_WIDTH{1'b0}};
     reg [3:0] state                                 = IDLE;
-    reg [ADDRESS_WIDTH -1:0] addr_buff              = {ADDRESS_WIDTH{1'b0}};
     reg [ADDRESS_WIDTH - 1:0] parallel_buff         = {ADDRESS_WIDTH{1'b0}};
     reg [DATA_WIDTH_LOG - 1:0] serial_data_counter  = 0;
 
@@ -67,8 +69,8 @@ module slave #(
     );
 
     // tristate buffers
-    assign parallel_port_wire = data_dir_inv_s2p ? parallel_buff : {DATA_WIDTH{1'bZ}};
-    assign slave_busy = slave_busy_reg ? 1'b1 :1'bZ;
+    assign parallel_port_wire = data_dir_inv_s2p ? parallel_buff : {ADDRESS_WIDTH{1'bZ}};
+    assign slave_busy = slave_busy_reg ? 1'b1 : serial_buff;
 
     // main execution
     always @(posedge clk, negedge rstn) begin
@@ -81,26 +83,24 @@ module slave #(
             data_dir_inv_s2p        <= 1'b0;
             addr_buff               <= {ADDRESS_WIDTH{1'b0}};
             data_out_parellel       <= {DATA_WIDTH{1'b0}};
-            serial_decoder_access   <= 1'b0;
             slave_busy_reg          <= 1'b0;
+            serial_buff             <= 1'bZ;
 
         end else begin
             case (state)
                 IDLE: begin
                     if (~data_bus_serial) begin
                         state                   <= MATCH_SID1;
-                        read_width              <= 4'd2;
                         slave_busy_reg          <= 1'b1;
-                        serial_decoder_access   <= 1'b1;
                     end else begin
                         parallel_buff           <= {DATA_WIDTH{1'b0}};
                         serial_data_counter     <= {DATA_WIDTH_LOG{1'b0}};
                         write_en_internal       <= 1'b0;
                         data_dir_inv_s2p        <= 1'b0;
-                        serial_decoder_access   <= 1'b0;
                         addr_buff               <= {ADDRESS_WIDTH{1'b0}};
                         data_out_parellel       <= {DATA_WIDTH{1'b0}};
                         slave_busy_reg          <= 1'b0;
+                        serial_buff             <= 1'bZ;
                     end
                 end
 
@@ -112,6 +112,7 @@ module slave #(
                 MATCH_SID2: begin
                     if ({slave_match_reg, data_bus_serial} == SELF_ID) begin
                         state               <= ADDR_READ;
+                        read_width          <= ADDRESS_WIDTH;
                         serial_rx_enable    <= 1'b1;
                     end else state <= WAIT_FOR_PEER;
                 end
@@ -122,45 +123,81 @@ module slave #(
 
                 ADDR_READ: begin
                     if (serial_dv) begin
-                        serial_rx_enable        <= 1'b0;
-                        read_width      <= DATA_WIDTH;
-                        addr_buff       <= parallel_port_wire[ADDRESS_WIDTH - 1:0];
-
-                        if (rd_wrt) state       <= RX_DATA_FROM_MS;
-                        else begin
-                            state               <= BUSY_RD_FROM_MEM;
-                            data_dir_inv_s2p    <= 1'b1;
-                        end
+                        serial_rx_enable    <= 1'b0;
+                        read_width          <= DATA_WIDTH;
+                        addr_buff           <= parallel_port_wire[ADDRESS_WIDTH - 1:0];
+                        state               <= ADDR_ACK;
                     end
                 end
 
+                ADDR_ACK:begin
+                    case (ack_counter)
+                        1'b0: begin
+                            serial_buff  <= 1'b0;
+                            ack_counter  <= 1'b1;
+                        end
+
+                        1'b1: begin 
+                            serial_buff  <= 1'b0;
+                            ack_counter  <= 1'b0;
+
+                            if (rd_wrt) state       <= RX_DATA_FROM_MS;
+                            else begin
+                                state               <= BUSY_RD_FROM_MEM;
+                                data_dir_inv_s2p    <= 1'b1;
+                            end
+                        end
+                    endcase
+                end 
+
                 RX_DATA_FROM_MS: begin
                     serial_rx_enable        <= 1'b1;
+                    serial_buff             <= 1'bZ;
+
                     if (serial_dv) begin
                         serial_rx_enable    <= 1'b0;
                         data_out_parellel   <= parallel_port_wire;
-                        state               <= BUSY_WRT_TO_MEM;
+                        state               <= RX_DATA_ACK;
                         write_en_internal   <= 1'b1;
                         serial_rx_enable    <= 1'b0;
                     end
                 end
 
+                RX_DATA_ACK: begin
+                    case (ack_counter)
+                        1'b0: begin
+                            serial_buff         <= 1'b0;
+                            ack_counter         <= 1'b1;
+                        end
+
+                        1'b1: begin 
+                            serial_buff         <= 1'b1;
+                            ack_counter         <= 1'b0;
+                            state               <= BUSY_WRT_TO_MEM;
+                            serial_rx_enable    <= 1'b0;
+                            data_out_parellel   <= parallel_port_wire;
+                            write_en_internal   <= 1'b1;
+                            serial_rx_enable    <= 1'b0;
+                        end
+                    endcase
+                end
+
                 BUSY_WRT_TO_MEM: begin
-                    write_en_internal <= 1'b0;
-                    if (module_dv) state <= IDLE;
+                    serial_buff             <= 1'bZ;
+                    write_en_internal       <= 1'b0;
+                    if (module_dv) state    <= IDLE;
                 end
 
                 BUSY_RD_FROM_MEM: begin
                     if (module_dv) begin
-                        parallel_buff <= data_in_parellel;
-                        state <= DATA_READY;
-                        slave_busy_reg <= 1'b0;
+                        parallel_buff   <= data_in_parellel;
+                        state           <= DATA_READY;
+                        slave_busy_reg  <= 1'b0;
                     end
                 end
 
                 DATA_READY: if (slave_busy) begin
                     state                   <= TX_DATA_TO_MS;
-                    serial_decoder_access   <= 1'b0;
                     slave_busy_reg          <= 1'b1;
                     serial_tx_start         <= 1'b1;
                 end
