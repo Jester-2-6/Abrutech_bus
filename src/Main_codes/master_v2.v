@@ -97,7 +97,7 @@ serial_parallel_2way #(
     .clk(clk),
     .rstn(rstn),
     .dv_in(converter_send),                   // Initiate parallel to serial
-    .invert_sp2(bus_in_out_reg),              // To change direction of converter 1: s<-p 0: s->p
+    .invert_s2p(bus_in_out_reg),              // To change direction of converter 1: s<-p 0: s->p
     .en(converter_rd_en),                     // will immediately start reading from serial line
     .bit_length(bit_length_reg),              // Number of bits to send/receive
     .dv_out(d_received),                      // parallel data received
