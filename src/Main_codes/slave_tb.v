@@ -6,7 +6,7 @@ localparam ADDRESS_WIDTH = 15;
 reg clk = 1'b0; 
 reg rstn = 1'b0; 
 reg rd_wrt = 1'b0; 
-reg bus_req = 1'b0; 
+reg bus_util = 1'b0; 
 reg module_dv = 1'b0; 
 reg data_bus_serial = 1'b1; 
 reg slave_busy = 1'b0;
@@ -20,16 +20,17 @@ wire serial_wire;
 wire busy_wire;
 
 assign serial_wire = data_bus_serial;
-assign busy_wire = slave_busy;
+assign busy_wire = slave_busy ? 1'b1 : 1'bZ;
 
 slave #(
     .ADDRESS_WIDTH(15),
-    .DATA_WIDTH(8)
+    .DATA_WIDTH(8),
+    .SELF_ID(2'b11)
 ) slave_inst (
     .clk(clk),
     .rstn(rstn),
     .rd_wrt(rd_wrt),
-    .bus_req(bus_req),
+    .bus_util(bus_util),
     .module_dv(module_dv),
     .data_bus_serial(serial_wire),
     .slave_busy(busy_wire),
@@ -49,10 +50,7 @@ initial begin
     rstn = 1'b1;
 
     #10
-    bus_req = 1'b1;
-
-    #10
-    bus_req = 1'b0;
+    bus_util = 1'b1;
 
     #10
     data_bus_serial <= 0;
@@ -77,15 +75,15 @@ initial begin
 
     #10
     data_bus_serial <= 0;
+    bus_util        <= 0;
 
     #10
-    data_bus_serial <= 1;
+    data_bus_serial <= 1'b0;
+    rd_wrt <= 1;
 
     #10
-    data_bus_serial <= 0;
+    data_bus_serial <= 
 
-    #10
-    data_bus_serial <= 0;
 end
 
 endmodule

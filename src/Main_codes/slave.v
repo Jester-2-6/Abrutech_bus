@@ -10,7 +10,7 @@ module slave #(
     parameter DATA_WIDTH = 8,
     parameter SELF_ID = 2'b0
 )(
-    input clk, rstn, rd_wrt, bus_req, module_dv,
+    input clk, rstn, rd_wrt, bus_util, module_dv,
     input [DATA_WIDTH - 1:0] data_in_parellel,
 
     output reg write_en_internal = 1'b0, //make done bidirectional
@@ -21,18 +21,20 @@ module slave #(
 );
 
     localparam IDLE                = 4'd0;
-    localparam MATCH_SID           = 4'd1;
-    localparam ADDR_READ           = 4'd2;
-    localparam RX_DATA_FROM_MS     = 4'd3;
-    localparam BUSY_WRT_TO_MEM     = 4'd4;
-    localparam BUSY_RD_FROM_MEM    = 4'd5;
-    localparam DATA_READY          = 4'd6;
-    localparam TX_DATA_TO_MS       = 4'd7;
-    localparam CLEANUP             = 4'd8;
+    localparam MATCH_SID1          = 4'd1;
+    localparam MATCH_SID2          = 4'd2;
+    localparam WAIT_FOR_PEER       = 4'd3;
+    localparam ADDR_READ           = 4'd4;
+    localparam RX_DATA_FROM_MS     = 4'd5;
+    localparam BUSY_WRT_TO_MEM     = 4'd6;
+    localparam BUSY_RD_FROM_MEM    = 4'd7;
+    localparam DATA_READY          = 4'd8;
+    localparam TX_DATA_TO_MS       = 4'd9;
+    localparam CLEANUP             = 4'd10;
 
     localparam DATA_WIDTH_LOG = $clog2(DATA_WIDTH);
 
-    wire addr_valid, serial_dv, serial_tx_done;
+    wire serial_dv, serial_tx_done;
     wire [ADDRESS_WIDTH - 1:0] parallel_port_wire;
 
     reg serial_rx_enable        = 1'b0;
@@ -40,6 +42,7 @@ module slave #(
     reg serial_tx_start         = 1'b0;
     reg data_dir_inv_s2p        = 1'b0;
     reg slave_busy_reg          = 1'b0;
+    reg slave_match_reg         = 1'b0;
 
     reg [DATA_WIDTH - 1:0] read_width               = {DATA_WIDTH{1'b0}};
     reg [3:0] state                                 = IDLE;
@@ -84,10 +87,9 @@ module slave #(
         end else begin
             case (state)
                 IDLE: begin
-                    if (bus_req) begin
-                        state                   <= MATCH_SID;
+                    if (~data_bus_serial) begin
+                        state                   <= MATCH_SID1;
                         read_width              <= 4'd2;
-                        serial_rx_enable        <= 1'b1;
                         slave_busy_reg          <= 1'b1;
                         serial_decoder_access   <= 1'b1;
                     end else begin
@@ -102,20 +104,25 @@ module slave #(
                     end
                 end
 
-                MATCH_SID: begin
+                MATCH_SID1: begin
+                    slave_match_reg <= data_bus_serial;
+                    state           <= MATCH_SID2;
+                end
 
-                    if (serial_dv) begin
-                        if (parallel_port_wire[1:0] == SELF_ID) begin
-                            state <= ADDR_READ;
-                            read_width <= ADDRESS_WIDTH;
+                MATCH_SID2: begin
+                    if ({slave_match_reg, data_bus_serial} == SELF_ID) begin
+                        state               <= ADDR_READ;
+                        serial_rx_enable    <= 1'b1;
+                    end else state <= WAIT_FOR_PEER;
+                end
 
-                        end else state <= IDLE;
-                    end
+                WAIT_FOR_PEER: begin
+                    if (~bus_util) state <= IDLE;
                 end
 
                 ADDR_READ: begin
-
                     if (serial_dv) begin
+                        serial_rx_enable        <= 1'b0;
                         read_width      <= DATA_WIDTH;
                         addr_buff       <= parallel_port_wire[ADDRESS_WIDTH - 1:0];
 
@@ -128,7 +135,9 @@ module slave #(
                 end
 
                 RX_DATA_FROM_MS: begin
+                    serial_rx_enable        <= 1'b1;
                     if (serial_dv) begin
+                        serial_rx_enable    <= 1'b0;
                         data_out_parellel   <= parallel_port_wire;
                         state               <= BUSY_WRT_TO_MEM;
                         write_en_internal   <= 1'b1;
@@ -170,14 +179,14 @@ force -freeze sim:/slave/clk 1 0, 0 {50 ps} -r 100
 force -freeze sim:/slave/rstn 0 0
 force -freeze sim:/slave/rd_wrt 0 0
 force -freeze sim:/slave/data_bus_serial 1 0
-force -freeze sim:/slave/bus_req 0 0
+force -freeze sim:/slave/bus_util 0 0
 force -freeze sim:/slave/module_dv 0 0
 force -freeze sim:/slave/data_in_parellel 0 0
 run
 force -freeze sim:/slave/rstn St1 0
 run
-force -freeze sim:/slave/bus_req St1 0
+force -freeze sim:/slave/bus_util St1 0
 force -freeze sim:/slave/data_bus_serial 0 0
 run
-force -freeze sim:/slave/bus_req St0 0
+force -freeze sim:/slave/bus_util St0 0
 run*/
