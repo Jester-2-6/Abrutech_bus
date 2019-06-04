@@ -49,7 +49,7 @@ output     [DATA_WIDTH-1:0]  m_dout;
 input                        b_grant;
 inout                        b_BUS;            // Master bus. Have to rout the converter
 output reg                   b_request = 1'b0;
-output                       b_RW;             // Usually pullup
+output                       b_RW;             // Usually pulldown
 output                       b_bus_utilizing;  // Usually pulldown
 
 
@@ -136,7 +136,7 @@ begin
         ack_buffer_reg    <= 1'b1;
         STATE             <= IDLE;
     end else begin
-        case(STATE):
+        case(STATE)
 
 
             IDLE:
@@ -214,7 +214,7 @@ begin
                 m_master_bsy      <= 1'b0;
                 bus_util_reg      <= 1'b1;
                 b_request         <= 1'b1;
-                bit_length_reg    <= ADDRESS_WIDTH; // Telling to send address size bits
+                bit_length_reg    <= ADDRS_WIDTH; // Telling to send address size bits
                 timeout_reg       <= {TIMEOUT_LEN{1'b0}};
                 if(~m_hold)
                 begin
@@ -260,7 +260,7 @@ begin
                 //address_reg       <= {ADDRS_WIDTH{1'b0}};
                 bus_util_reg      <= 1'b1;
                 timeout_reg       <= {TIMEOUT_LEN{1'b0}};
-                bit_length_reg    <= ADDRESS_WIDTH;
+                bit_length_reg    <= ADDRS_WIDTH;
                 converter_send    <= 1'b0; //making a pulse
                 converter_rd_en   <= 1'b0; 
                 conv_parallel_reg <= address_reg; 
@@ -304,7 +304,7 @@ begin
                         begin
                             STATE <= WRITE;
                             bus_in_out_reg    <= 1'b1; // 1: sending data 0: receiving data
-                            conv_parallel_reg[ADDRESS_WIDTH-1:ADDRESS_WIDTH-DATA_WIDTH] <= data_reg;
+                            conv_parallel_reg[ADDRS_WIDTH-1:ADDRS_WIDTH-DATA_WIDTH] <= data_reg;
                             converter_send    <= 1'b1; 
                         end else begin // Read operation
                             STATE <= READ1;
@@ -314,7 +314,7 @@ begin
                     end else begin // ACK not yet received
                         bus_in_out_reg    <= 1'b0; // 1: sending data 0: receiving data
                         converter_send    <= 1'b0; 
-                        bit_length_reg    <= ADDRESS_WIDTH;
+                        bit_length_reg    <= ADDRS_WIDTH;
                         conv_parallel_reg <= address_reg;
                     end
                 end 
@@ -329,7 +329,7 @@ begin
                 //RW_reg            <= 1'b0;
                 //address_reg       <= {ADDRS_WIDTH{1'b0}};
                 timeout_reg       <= {TIMEOUT_LEN{1'b0}};
-                bit_length_reg    <= ADDRESS_WIDTH;
+                bit_length_reg    <= ADDRS_WIDTH;
                 converter_rd_en   <= 1'b0; 
                 conv_parallel_reg <= address_reg;
                 ack_buffer_reg    <= 1'b1;
@@ -392,7 +392,7 @@ begin
                 bus_in_out_reg    <= 1'b0; // 1: sending data 0: receiving data
                 if(d_received)
                 begin
-                    data_reg        <= converter_parallel_line[ADDRESS_WIDTH-1:ADDRESS_WIDTH-DATA_WIDTH];
+                    data_reg        <= converter_parallel_line[ADDRS_WIDTH-1:ADDRS_WIDTH-DATA_WIDTH];
                     m_dvalid        <= 1'b1;   // Saying the module the task is done
                     m_master_bsy    <= 1'b0;
                     converter_rd_en <= 1'b0; 
@@ -417,7 +417,7 @@ begin
                 bit_length_reg    <= DATA_WIDTH;
                 converter_send    <= 1'b0; 
                 converter_rd_en   <= 1'b0; 
-                conv_parallel_reg[ADDRESS_WIDTH-1:ADDRESS_WIDTH-DATA_WIDTH] <= data_reg;                    
+                conv_parallel_reg[ADDRS_WIDTH-1:ADDRS_WIDTH-DATA_WIDTH] <= data_reg;                    
                 if(d_sent) //confirmation of address send
                 begin
                     STATE <= DATA_ACK_WAIT;
