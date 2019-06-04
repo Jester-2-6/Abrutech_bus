@@ -30,36 +30,39 @@ module parallel_serial #(
         if (rstn == 1'b0) begin
             // reset
             state               <= IDLE;
-            serial_tx_counter   <= {BIT_LENGTH{1'b0}};
+            serial_tx_counter   <= bit_length;
             dout                <= 1'bZ;
             serial_buffer       <= {PARALLEL_PORT_WIDTH{1'b0}};
         end else begin
             case(state)
-            IDLE: begin
-                dout                <= 1'bZ;
-                data_sent           <= 1'b0;
-                if (dv_in) begin
-                    state           <= START;
-                    serial_buffer   <= din;
+                IDLE: begin
+                    dout                <= 1'bZ;
+                    data_sent           <= 1'b0;
+                    if (dv_in) begin
+                        state           <= START;
+                        serial_buffer   <= din;
+                    end
                 end
-            end
 
-            START: begin
-                dout    <= 1'b0;
-                state   <= IN_PROGRESS;
-            end
-
-            IN_PROGRESS: begin
-                dout <= serial_buffer[serial_tx_counter];
-                serial_tx_counter <= serial_tx_counter + 1;
-
-                if (serial_tx_counter == bit_length - 1) begin
-                    state <= IDLE;
-                    serial_buffer <= {PARALLEL_PORT_WIDTH{1'b0}};
-                    serial_tx_counter <= {BIT_LENGTH{1'b0}};
-                    data_sent <= 1'b1;
+                START: begin
+                    dout    <= 1'b0;
+                    state   <= IN_PROGRESS;
                 end
-            end
+
+                IN_PROGRESS: begin
+                    if (bit_length == 0) state <= IDLE;
+                    else begin
+                        dout <= serial_buffer[serial_tx_counter];
+                        serial_tx_counter <= serial_tx_counter - 1;
+
+                        if (serial_tx_counter == 0) begin
+                            state <= IDLE;
+                            serial_buffer <= {PARALLEL_PORT_WIDTH{1'b0}};
+                            serial_tx_counter <= {BIT_LENGTH{1'b0}};
+                            data_sent <= 1'b1;
+                        end
+                    end
+                end
             endcase
         end
     end

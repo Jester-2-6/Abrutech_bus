@@ -6,7 +6,7 @@ Organization : ABruTECH
 Description  : 2 way parallel serial converter
 */
 module serial_parallel_2way#(
-    parameter PORT_WIDTH = 14,
+    parameter PORT_WIDTH = 15,
     parameter BIT_LENGTH = 4
 )(
     input clk, rstn, dv_in, invert_s2p, en,
@@ -22,8 +22,8 @@ module serial_parallel_2way#(
     wire [PORT_WIDTH - 1:0] parallel_wire;
 
     // tristate buffers
-    assign parallel_port = invert_s2p ? parallel_wire : {PORT_WIDTH{1'bZ}};
-    assign serial_port = invert_s2p ? 1'bZ : serial_wire;
+    assign parallel_port = invert_s2p ? {PORT_WIDTH{1'bZ}} : parallel_wire;
+    assign serial_port = invert_s2p ? serial_wire : 1'bZ;
 
     // serial to parallel converter instance
     serial_parallel #(
