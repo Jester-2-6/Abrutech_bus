@@ -39,7 +39,7 @@ module slave #(
     reg serial_decoder_access   = 1'b0;
     reg serial_tx_start         = 1'b0;
     reg data_dir_inv_s2p        = 1'b0;
-    reg slave_busy_reg          = 1'bZ;
+    reg slave_busy_reg          = 1'b0;
 
     reg [DATA_WIDTH - 1:0] read_width               = {DATA_WIDTH{1'b0}};
     reg [3:0] state                                 = IDLE;
@@ -79,6 +79,7 @@ module slave #(
             addr_buff               <= {ADDRESS_WIDTH{1'b0}};
             data_out_parellel       <= {DATA_WIDTH{1'b0}};
             serial_decoder_access   <= 1'b0;
+            slave_busy_reg          <= 1'b0;
 
         end else begin
             case (state)
@@ -97,6 +98,7 @@ module slave #(
                         serial_decoder_access   <= 1'b0;
                         addr_buff               <= {ADDRESS_WIDTH{1'b0}};
                         data_out_parellel       <= {DATA_WIDTH{1'b0}};
+                        slave_busy_reg          <= 1'b0;
                     end
                 end
 
