@@ -92,7 +92,7 @@ master_0(
 slave #(
     .ADDRESS_WIDTH(ADDRS_WIDTH),
     .DATA_WIDTH(DATA_WIDTH),
-    .SELF_ID(2'b10)
+    .SELF_ID(3'b101)
 )
 slave_0
 (
