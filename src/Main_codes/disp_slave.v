@@ -1,7 +1,10 @@
 module disp_slave(
-    input clk, rstn, bus_util,
+    input clk, 
+    input rstn, 
+    input bus_util,
 
-    inout data_bus_serial, slave_busy,
+    inout data_bus_serial, 
+    inout slave_busy,
 
     output [6:0] dout0,
     output [6:0] dout1,
@@ -26,8 +29,8 @@ slave #(
     .rstn(rstn), 
     .rd_wrt(1'b0), 
     .bus_util(bus_util), 
-    .module_dv(1'b0),
-    .data_in_parellel({DATA_WIDTH{0'b0}}),
+    .module_dv(1'b1),
+    .data_in_parellel({DATA_WIDTH{1'b0}}),
 
     .write_en_internal(update_disp),
     .data_out_parellel(data_out_parellel),

@@ -10,7 +10,9 @@ module parallel_serial #(
     parameter PARALLEL_PORT_WIDTH = 15,
     parameter BIT_LENGTH = 4
 )(
-    input clk, rstn, dv_in, 
+    input clk, 
+    input rstn, 
+    input dv_in, 
     input [PARALLEL_PORT_WIDTH - 1:0] din, 
     input [BIT_LENGTH - 1:0] bit_length,
     
