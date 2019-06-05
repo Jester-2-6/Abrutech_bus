@@ -1,3 +1,11 @@
+/*
+Module name  : display_module.v
+Author 	     : C.Wimalasuriya/W.M.R.R.Wickramasinghe
+Date Modified: 01/06/2019
+Organization : ABruTECH
+Description  : Slave and Master integrated for display module
+*/
+
 module display_module(
     input clk, 
     input rstn,
@@ -21,9 +29,20 @@ module display_module(
     localparam SELF_ID      = 3'd0;
     localparam INTERFACE1_ADD = {3'b010,12'b0};  // The data will be sent to this port
 
-    reg slave_dv        = 1'b0; // ===========> MODIFY THIS <=================
+    //STATES
+    
+    localparam IDLE         = 2'd0;
+    localparam TIMEOUT      = 2'd1;
+    localparam SEND         = 2'd2;
+    localparam WAIT_FOR_ACK = 2'd3;
+    reg [1:0] STATE         = IDLE;
+    
+
+
+    reg slave_dv        = 1'b0; 
     reg [DATA_WIDTH-1:0] display_buffer = {DATA_WIDTH{1'b0}};
     reg [TIMEOUT_LEN-1:0] timer  = {TIMEOUT_LEN{1'b0}};
+
 
     reg m_hold    = 1'b0;
     reg m_execute = 1'b0;
@@ -87,25 +106,77 @@ module display_module(
         .dout0(dout0)
     );
 
-    always @(posedge update_disp) display_buffer <= data_out_parallel;
 
-    always @(negedge rstn, posedge clk) begin
-        if (~rstn) begin
-            display_buffer <= {DATA_WIDTH{1'b0}}
-            slave_dv    <= 1'b0;
-        end
-
-    end
-
-        // ===========> BOO CODE HERE <==================
     always@(posedge clk,negedge rstn)
     begin
         if (~rstn) begin
-            slave_dv       <= 1'b0; // ===========> MODIFY THIS <=================
+            slave_dv       <= 1'b0;
             display_buffer <= {DATA_WIDTH{1'b0}};
-            timer  <= {TIMEOUT_LEN{1'b0}};
+            timer          <= {TIMEOUT_LEN{1'b0}};
+            STATE          <= IDLE;
         end else begin
-            
+            case(STATE)
+                IDLE:
+                begin
+                    slave_dv       <= 1'b0;
+                    timer          <= {TIMEOUT_LEN{1'b0}};
+                    m_hold         <= 1'b0;
+                    m_execute      <= 1'b0;
+                    if(update_disp)
+                    begin
+                        STATE <= TIMEOUT;
+                        display_buffer <= data_out_parallel;
+                    end else begin
+                        STATE <= IDLE;
+                    end   
+                end
+
+                TIMEOUT:
+                begin
+                    slave_dv       <= 1'b0;
+                    timer          <= timer +1'b1;
+                    m_execute      <= 1'b0;
+                    if(timer == {TIMEOUT_LEN{1'b1}}) 
+                    begin
+                        STATE  <= SEND;
+                        m_hold <= 1'b1;
+                    end else begin
+                        STATE          <= TIMEOUT;
+                        m_hold         <= 1'b0;
+                    end  
+                end
+
+                SEND:
+                begin
+                    slave_dv       <= 1'b0;
+                    m_hold         <= 1'b1;
+                    if(~m_master_bsy)
+                    begin
+                        STATE <= WAIT_FOR_ACK;
+                        m_execute <= 1'b1;
+                    end else begin
+                        STATE <= SEND;
+                        m_execute      <= 1'b0;
+                    end
+                end
+
+                WAIT_FOR_ACK:
+                begin
+                    m_execute      <= 1'b0;
+                    timer          <= {TIMEOUT_LEN{1'b0}};
+                    if(m_dvalid) 
+                    begin
+                        m_hold <= 1'b0;
+                        slave_dv <= 1'b1;
+                        STATE <= IDLE;
+                    end else begin
+                        STATE <= WAIT_FOR_ACK;
+                        slave_dv       <= 1'b0; 
+                        m_hold         <= 1'b1;
+                    end
+                end
+                default: STATE <= IDLE;
+            endcase
         end
     end
 
