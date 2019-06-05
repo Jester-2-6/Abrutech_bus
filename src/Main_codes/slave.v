@@ -10,7 +10,11 @@ module slave #(
     parameter DATA_WIDTH = 8,
     parameter SELF_ID = 2'b0
 )(
-    input clk, rstn, rd_wrt, bus_util, module_dv,
+    input clk, 
+    input rstn, 
+    input rd_wrt, 
+    input bus_util, 
+    input module_dv,
     input [DATA_WIDTH - 1:0] data_in_parellel,
 
     output reg write_en_internal = 1'b0, //make done bidirectional
