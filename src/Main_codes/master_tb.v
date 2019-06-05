@@ -5,6 +5,7 @@ Date Modified: 04/06/2019
 Organization : ABruTECH
 Description  : Test bench for Master module of the bus
 */
+`timescale 1 ns / 1 ps
 
 module master_tb;
 
@@ -16,7 +17,6 @@ localparam TIMEOUT_LEN = 6; //in bits 4 means 16 clocks
 localparam BIT_LENGTH  = 4; //size of bit_length port 4=> can
 localparam CLK_PERIOD  = 10; //10ns 
 
-`timescale 1 ns / 1 ps
 
 
 // Port declaration
@@ -33,7 +33,7 @@ wire                       m_master_bsy;
 wire     [DATA_WIDTH-1:0]  m_dout;
 // BUS side
 reg                        b_grant = 1'b0;
-wire                       b_BUS;            // Master bus. Have to rout the converter inout
+wire    (strong0,weak1)    b_BUS = 1'b1;            // Master bus. Have to rout the converter inout
 wire                       b_request;
 wire                       b_RW;             // Usually pulldown
 wire                       b_bus_utilizing;  // Usually pulldown
@@ -44,7 +44,7 @@ reg                        slave_out   = 1'b1;
 // General conditions
 pulldown(b_bus_utilizing);
 pulldown(b_RW);
-pullup(b_Bus);
+// pullup(b_Bus);
 assign b_BUS = slave_drive?slave_out:1'bZ;
 
 // DUT instantiation
@@ -95,10 +95,7 @@ begin
     slave_out   <= 1'b1;
 
     // resetting
-    #(CLK_PERIOD/4);
-    rstn      <= 1'b0;
-    #(CLK_PERIOD*2);
-    rstn      <= 1'b1;
+    async_reset;
 
     @(posedge clk);
     #(CLK_PERIOD*4);
@@ -110,12 +107,65 @@ begin
     @(negedge m_master_bsy);
     m_execute <= 1'b1;
     @(posedge clk);
-    m_execute <= 1'b1;
+    m_execute <= 1'b0;
+
+    @(posedge(b_bus_utilizing));
+    @(posedge(b_bus_utilizing));
+    @(negedge(b_request));
+    @(posedge(clk));
+    b_grant <= 1'b0;
+
+    @(posedge(clk));
+    @(posedge(clk));
+    @(posedge(clk));
+    @(posedge(clk));
+    b_grant <= 1'b1;
+
+    // sending ack from slave
+    @(posedge(b_bus_utilizing));
+    pass_clocks(20);
+
+
+    @(posedge clk);
+    slave_drive <= 1'b1;
+    slave_out   <= 1'b0;
+    @(posedge clk);
+    slave_out   <= 1'b0;
+    @(posedge clk);
+    slave_drive <= 1'b0;    
+
+
 
     
 
 
     
 end
+
+// Task definitions
+task async_reset;     
+    //input [3:0] load_value;     
+    begin//@(negedge clk_50);
+        @(posedge clk);
+        #(CLK_PERIOD/4);
+        rstn      <= 1'b0;
+        #(CLK_PERIOD*2);
+        rstn      <= 1'b1;   
+    end  
+endtask 
+
+task pass_clocks;     
+    input num_clks;
+    integer num_clks;
+    
+    //input [3:0] load_value;     
+    begin: psclk//@(negedge clk_50);
+        integer i;
+        for( i=0; i<num_clks; i=i+1)
+        begin
+            @(posedge clk);
+        end
+    end  
+endtask 
 
 endmodule
