@@ -200,31 +200,21 @@ module slave #(
                             serial_rx_enable    <= 1'b0;
                             data_out_parellel   <= parallel_port_wire[ADDRESS_WIDTH - 1: ADDRESS_WIDTH - DATA_WIDTH];
                             state               <= TX_DATA_ACK;
-                            write_en_internal   <= 1'b1;
                             ack_counter         <= 1'b0;
+                            serial_buff         <= 1'b0;
                         end
                     end
                 end
 
                 TX_DATA_ACK: begin
-                    case (ack_counter)
-                        1'b0: begin
-                            serial_buff         <= 1'b0;
-                            ack_counter         <= 1'b1;
-                            write_en_internal   <= 1'b0;
-                        end
-
-                        1'b1: begin 
-                            serial_buff         <= 1'b1;
-                            ack_counter         <= 1'b0;
-                            state               <= BUSY_WRT_TO_MEM;
-                            serial_rx_enable    <= 1'b0;
-                            serial_rx_enable    <= 1'b0;
-                        end
-                    endcase
+                    serial_buff         <= 1'b1;
+                    state               <= BUSY_WRT_TO_MEM;
+                    serial_rx_enable    <= 1'b0;
+                    write_en_internal   <= 1'b1;
                 end
 
                 BUSY_WRT_TO_MEM: begin
+                    write_en_internal       <= 1'b0;
                     serial_buff             <= 1'bZ;
                     if (module_dv) state    <= IDLE;
                 end
