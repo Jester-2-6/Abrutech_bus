@@ -33,6 +33,7 @@ module slave #(
     localparam DATA_READY          = 4'd10;
     localparam TX_DATA_TO_MS       = 4'd11;
     localparam CLEANUP             = 4'd12;
+    localparam WAIT_TIMEOUT        = 4'd13;
 
     localparam DATA_WIDTH_LOG = $clog2(DATA_WIDTH);
 
@@ -50,7 +51,9 @@ module slave #(
     reg [DATA_WIDTH - 1:0] read_width               = {DATA_WIDTH{1'b0}};
     reg [3:0] state                                 = IDLE;
     reg [ADDRESS_WIDTH - 1:0] parallel_buff         = {ADDRESS_WIDTH{1'b0}};
-    reg [DATA_WIDTH_LOG - 1:0] serial_data_counter  = 0;
+    reg [DATA_WIDTH_LOG - 1:0] serial_data_counter  = {DATA_WIDTH_LOG{1'b0}};
+    reg [3:0] timeout_counter                       = 4'b0;
+    reg [3:0] temp_state_reg                        = 4'b0;
 
     serial_parallel_2way #(
         .PORT_WIDTH(ADDRESS_WIDTH),
@@ -85,6 +88,8 @@ module slave #(
             data_out_parellel       <= {DATA_WIDTH{1'b0}};
             slave_busy_reg          <= 1'b0;
             serial_buff             <= 1'bZ;
+            timeout_counter                       = 4'b0;
+            temp_state_reg                        = 4'b0;
 
         end else begin
             case (state)
@@ -101,6 +106,8 @@ module slave #(
                         data_out_parellel       <= {DATA_WIDTH{1'b0}};
                         slave_busy_reg          <= 1'b0;
                         serial_buff             <= 1'bZ;
+                        timeout_counter         <= 4'b0;
+                        temp_state_reg          <= 4'b0;
                     end
                 end
 
@@ -126,7 +133,17 @@ module slave #(
                         serial_rx_enable    <= 1'b0;
                         read_width          <= DATA_WIDTH;
                         addr_buff           <= parallel_port_wire[ADDRESS_WIDTH - 1:0];
-                        state               <= ADDR_ACK;
+                        state               <= WAIT_TIMEOUT;
+                        temp_state_reg      <= ADDR_ACK;
+                    end
+                end
+
+                WAIT_TIMEOUT: begin
+                    timeout_counter <= timeout_counter + 1'b1;
+
+                    if (timeout_counter[3]) begin
+                        state <= temp_state_reg;
+                        timeout_counter <= 4'b0;
                     end
                 end
 
@@ -157,7 +174,8 @@ module slave #(
                     if (serial_dv) begin
                         serial_rx_enable    <= 1'b0;
                         data_out_parellel   <= parallel_port_wire;
-                        state               <= TX_DATA_ACK;
+                        state               <= WAIT_TIMEOUT;
+                        temp_state_reg      <= TX_DATA_ACK;
                         write_en_internal   <= 1'b1;
                         serial_rx_enable    <= 1'b0;
                     end
