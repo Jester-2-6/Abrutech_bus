@@ -23,7 +23,7 @@ module display_module(
 
     reg slave_dv        = 1'b0; // ===========> MODIFY THIS <=================
     reg [DATA_WIDTH-1:0] display_buffer = {DATA_WIDTH{1'b0}};
-    reg [TIMEOUT_LEN-1:0]               = {TIMEOUT_LEN{1'b0}};
+    reg [TIMEOUT_LEN-1:0] timer  = {TIMEOUT_LEN{1'b0}};
 
     reg m_hold    = 1'b0;
     reg m_execute = 1'b0;
@@ -95,9 +95,18 @@ module display_module(
             slave_dv    <= 1'b0;
         end
 
+    end
+
         // ===========> BOO CODE HERE <==================
-    always@(posedge clk)
-    beg
+    always@(posedge clk,negedge rstn)
+    begin
+        if (~rstn) begin
+            slave_dv       <= 1'b0; // ===========> MODIFY THIS <=================
+            display_buffer <= {DATA_WIDTH{1'b0}};
+            timer  <= {TIMEOUT_LEN{1'b0}};
+        end else begin
+            
+        end
     end
 
 
