@@ -46,7 +46,8 @@ reg                      sm_dv = 1'b0;
 reg [DATA_WIDTH-1:0]     sm_data = EXAMPLE_DATA-25;
 wire                     sm_write_en_internal;
 wire [DATA_WIDTH-1:0]    sm_data_internal;
-wire [ADDRS_WIDTH-1:0] sm_address;
+wire [ADDRS_WIDTH-1:0]   sm_address;
+wire                     sm_grant_data;
 // BUS side
 wire   (weak0,strong1)   slv_bsy = 1'b0;
 
@@ -104,6 +105,7 @@ slave_0
     .data_in_parellel(sm_data),
 
     .write_en_internal(sm_write_en_internal), //make done bidirectional
+    .req_int_data(sm_grant_data),
     .data_out_parellel(sm_data_internal),
     .addr_buff(sm_address),
 
@@ -149,6 +151,10 @@ begin
     m_execute <= 1'b0;
 
     @(posedge(sm_write_en_internal));
+        //done
+    @(posedge m_dvalid);
+    @(posedge clk);
+    m_hold <= 1'b0;
     @(posedge clk);
     @(posedge clk);
     @(posedge clk);
@@ -156,12 +162,10 @@ begin
     @(posedge clk);
     sm_dv <= 1'b0;
 
-    //done
-    @(posedge m_dvalid);
-    @(posedge clk);
-    m_hold <= 1'b0;
+
 
     // Read From slave
+    sm_data <= EXAMPLE_DATA-14;
     pass_clocks(10);
 
 
@@ -173,10 +177,24 @@ begin
     @(negedge m_master_bsy);
     @(posedge clk);
     m_execute <= 1'b1;
-    m_address   <= EXAMPLE_ADDR;
+    m_address   <= EXAMPLE_ADDR-4;
     m_RW        <= 1'b0;
     @(posedge clk);
     m_execute <= 1'b0;
+
+    @(posedge sm_grant_data);
+    @(posedge clk);
+    sm_dv <= 1'b1;
+    @(posedge clk);
+    sm_dv <= 1'b0;
+
+    @(posedge clk);
+    @(posedge clk);
+    arbiter_drive <= 1'b1;
+    arb_out       <= 1'b1;
+    @(posedge clk);
+    arbiter_drive <= 1'b0;
+
 
     //done
     @(posedge m_dvalid);
