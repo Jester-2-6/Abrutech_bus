@@ -203,6 +203,7 @@ module slave #(
                             state               <= WAIT_TIMEOUT;
                             temp_state_reg      <= TX_DATA_ACK;
                             write_en_internal   <= 1'b1;
+                            ack_counter         <= 1'b0;
                         end
                     end
                 end
