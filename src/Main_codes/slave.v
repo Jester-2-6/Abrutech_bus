@@ -74,6 +74,7 @@ module slave #(
     // tristate buffers
     assign parallel_port_wire = data_dir_inv_s2p ? parallel_buff : {ADDRESS_WIDTH{1'bZ}};
     assign slave_busy = slave_busy_reg ? 1'b1 : 1'bZ;
+    assign data_bus_serial = serial_buff;
 
     // main execution
     always @(posedge clk, negedge rstn) begin
@@ -88,8 +89,8 @@ module slave #(
             data_out_parellel       <= {DATA_WIDTH{1'b0}};
             slave_busy_reg          <= 1'b0;
             serial_buff             <= 1'bZ;
-            timeout_counter                       = 4'b0;
-            temp_state_reg                        = 4'b0;
+            timeout_counter         <= 4'b0;
+            temp_state_reg          <= 4'b0;
 
         end else begin
             case (state)

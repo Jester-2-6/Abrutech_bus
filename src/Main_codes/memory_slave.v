@@ -84,3 +84,97 @@ module memory_slave #(
     end
 
 endmodule
+
+/*force -freeze sim:/memory_slave/Slave_inst/clk 1 0, 0 {50 ps} -r 100
+force -freeze sim:/memory_slave/Slave_inst/rstn 0 0
+force -freeze sim:/memory_slave/Slave_inst/rd_wrt 1 0
+run
+force -freeze sim:/memory_slave/Slave_inst/rstn St1 0
+run
+force -freeze sim:/memory_slave/data_bus_serial 0 0
+run
+run
+run
+force -freeze sim:/memory_slave/data_bus_serial St1 0
+run
+run
+force -freeze sim:/memory_slave/data_bus_serial St0 0
+run
+run
+force -freeze sim:/memory_slave/data_bus_serial St1 0
+run
+force -freeze sim:/memory_slave/data_bus_serial St0 0
+run
+force -freeze sim:/memory_slave/data_bus_serial St1 0
+run
+force -freeze sim:/memory_slave/data_bus_serial St0 0
+run
+force -freeze sim:/memory_slave/data_bus_serial St1 0
+run
+force -freeze sim:/memory_slave/data_bus_serial St0 0
+run
+run
+force -freeze sim:/memory_slave/data_bus_serial St1 0
+run
+run
+noforce sim:/memory_slave/data_bus_serial
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+force -freeze sim:/memory_slave/data_bus_serial St1 0
+run
+force -freeze sim:/memory_slave/data_bus_serial St0 0
+run
+force -freeze sim:/memory_slave/data_bus_serial St1 0
+run
+force -freeze sim:/memory_slave/data_bus_serial St0 0
+run
+force -freeze sim:/memory_slave/data_bus_serial St1 0
+run
+force -freeze sim:/memory_slave/data_bus_serial St0 0
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+noforce sim:/memory_slave/data_bus_serial
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+*/
