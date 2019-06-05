@@ -167,7 +167,7 @@ module slave #(
                         timeout_counter <= 4'b0;
                     end
 
-                    if (serial_dv) begin
+                    if (module_dv) begin
                         state <= temp_state_reg;
                         timeout_counter <= 4'b0;
                     end

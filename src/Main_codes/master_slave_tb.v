@@ -146,6 +146,12 @@ begin
     @(posedge clk);
     m_execute <= 1'b0;
 
+    @(posedge(sm_write_en_internal));
+    @(posedge clk);
+    sm_dv <= 1'b1;
+    @(posedge clk);
+    sm_dv <= 1'b0;
+
     //done
     @(posedge m_dvalid);
     @(posedge clk);
