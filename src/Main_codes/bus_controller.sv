@@ -22,7 +22,7 @@ input       rstn;
 input       bus_util;
 input  wire [11:0]      m_reqs;
 output reg  [11:0]      m_grants = 12'b000000000000;
-inout       slaves      [5:0];
+inout       [5:0]       slaves;
 
 // Parameters:
 parameter MID_NONE      = 4'b1111;
@@ -56,8 +56,8 @@ reg [3:0]   mid_search  = MID_NONE;
 reg [3:0]   mid_grant   = MID_NONE;// 1111 => None granted
 reg [11:0]  mid_blocked = 12'b000000000000;
 
-reg slaves_inout_reg    [5:0] = '{1,1,1,1,1,1}; // Pulled up
-reg slaves_inout_dir    [5:0] = '{1,1,1,1,1,1}; // All inputs
+reg [5:0] slaves_inout_reg    = 6'b111111; // Pulled up
+reg [5:0] slaves_inout_dir    = 6'b111111; // All inputs
 
 reg [1:0]   slaves_state[5:0] = '{SLAVE_FREE, SLAVE_FREE, SLAVE_FREE, 
                                   SLAVE_FREE, SLAVE_FREE, SLAVE_FREE};
@@ -134,8 +134,8 @@ always @ (posedge clk, negedge rstn) begin
         mid_search              <= MID_NONE;
         mid_grant               <= MID_NONE;// 1111 => None granted
         mid_blocked             <= 12'b000000000000;
-        slaves_inout_reg  [5:0] <= '{1,1,1,1,1,1}; // Pulled up
-        slaves_inout_dir  [5:0] <= '{1,1,1,1,1,1}; // All inputs
+        slaves_inout_reg        <= 6'b111111; // Pulled up
+        slaves_inout_dir        <= 6'b111111; // All inputs
         slaves_state[5:0]       <= '{SLAVE_FREE, SLAVE_FREE, SLAVE_FREE,
                                     SLAVE_FREE, SLAVE_FREE, SLAVE_FREE};
         slaves_mid  [5:0]       <= '{MID_NONE, MID_NONE, MID_NONE,

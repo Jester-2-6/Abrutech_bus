@@ -23,19 +23,24 @@ module interface #(
     b_request,
     b_RW,
 );
-parameter   PACKET_WIDTH  = 10;
-parameter   DATA_WIDTH    = 8;
-parameter   ADDRS_WIDTH   = 15;
-parameter   PORT_WIDTH    = 10;
-parameter   BIT_LENGTH    = 4;
-parameter   TIMEOUT_LEN  = 6;
+parameter   PACKET_WIDTH= 10;
+parameter   DATA_WIDTH  = 8;
+parameter   ADDRS_WIDTH = 15;
+parameter   PORT_WIDTH  = 10;
+parameter   BIT_LENGTH  = 4;
+parameter   TIMEOUT_LEN = 6;
+
+parameter   RX_MODE     = 0;
+parameter   TX_MODE     = 1;
+parameter   TX_MANUAL   = 0;
+parameter   TX_CONVERTER= 1;
 
 parameter   DISPLAY_ADDRESS = 15'd0;
 
 input       clk;
 input       rstn;
 
-output reg  tx;
+output      tx;
 input       rx;
 inout       bus;
 
@@ -46,9 +51,13 @@ input       b_grant;
 output reg  b_request = 1'b0;
 inout       b_RW;             // Usually pulldown
 
-reg                     m_hold = 0;
-reg                     m_execute = 0;
-reg [DATA_WIDTH-1:0]    m_din = 0;
+reg                     mode        <= RX_MODE;
+reg                     tx_control  <= TX_MANUAL;
+reg [3:0]               state;
+
+reg                     m_hold      = 0;
+reg                     m_execute   = 0;
+reg [DATA_WIDTH-1:0]    m_din       = 0;
 
 wire [DATA_WIDTH-1:0]   m_dout;
 wire                    m_dvalid;
@@ -63,17 +72,18 @@ reg                     s_in_dv     = 1;
 reg [DATA_WIDTH-1:0]    s_data      = 0;
 
 reg                     c_in_dv;
-reg                     c_is_p2s;
 reg                     c_en_p2s;
-reg[PACKET_WIDTH - 1:0] c_parallel_reg;
-wire                    c_serial_reg;
 wire                    c_out_dv;
-wire                    c_dv_out;
-wire                    c_serial_tx_done;
-wire[PACKET_WIDTH- 1:0] c_parallel_inout;
-wire                    c_serial_inout;
+wire                    c_s_tx_done;
+reg[PACKET_WIDTH - 1:0] c_p_reg;
+wire[PACKET_WIDTH- 1:0] c_p_wire;
+wire                    c_s_wire;
 
-assign c_parallel_inout ?
+reg                     tx_manual_reg;
+
+assign c_p_wire         =  mode         ? c_p_reg   : {PACKET_WIDTH{1'bZ}};
+assign c_s_wire         =  mode         ? c_s_wire  : rx;
+assign tx               =  tx_control   ? c_s_wire  : tx_manual_reg;
 
 
 
@@ -135,14 +145,14 @@ converter(
     .clk(clk), 
     .rstn(rstn), 
     .dv_in(c_in_dv), 
-    .invert_s2p(c_is_p2s), 
+    .invert_s2p(mode), 
     .en(c_en_p2s),
     .bit_length(BIT_LENGTH),
-    .dv_out(c_dv_out), 
-    .serial_tx_done(c_serial_tx_done),
+    .dv_out(c_out_dv), 
+    .serial_tx_done(c_s_tx_done),
 
-    .parallel_port(),
-    .serial_port()
+    .parallel_port(c_p_wire),
+    .serial_port(c_s_wire)
 );
 
 
