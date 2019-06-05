@@ -22,12 +22,233 @@ module bus_top_module(
     utilization,
     slave_busy,
     mux_switch
+    master2_req,
+    master4_req,
+    master5_req,
 );
 
-// Parameters
+///////////////////////////////// Parameters ///////////////////////////////
+localparam DATA_WIDTH   = 8;
+localparam ADDRS_WIDTH  = 15;
+localparam TIMEOUT_LEN  = 6; //in bits 4 means 16 clocks
+localparam BIT_LENGTH   = 4; //size of bit_length port 4=> can
+localparam CLK_PERIOD   = 10; //10ns 
+localparam EXAMPLE_DATA = 8'd203;
+localparam EXAMPLE_ADDR = 15'd27306;
 
-// Port declaration
 
+
+////////////////////////////// Port declaration ////////////////////////////
+
+input clk;
+input rstn;
+input rx0;
+input rx1;
+input [] mux_switch;
+input master2_req;
+input master4_req;
+input master5_req;
+
+
+output tx0;
+output tx1;
+output hex0;
+output hex1;
+output hex2;
+output hex3;
+output hex4;
+output [11:0] requests;
+output utilization;
+output [5:0] slave_busy;
+
+////////////////////////////// Instantiations //////////////////////////////
+
+/////// Bus controller
+bus_controller Bus_Controller(
+    .clk(clk),
+    .rstn(deb_rstn),
+    .m_reqs(m_reqs),
+    .m_grants(m_grants),
+    .slaves(slaves),
+    .bus_util(b_bus_utilizing),
+    .state(state),
+    .mid_current(mid_current)
+);
+
+//////// Masters
+
+// Master2
+master #(
+    .DATA_WIDTH(DATA_WIDTH),
+    .ADDRS_WIDTH(ADDRS_WIDTH),
+    .TIMEOUT_LEN(TIMEOUT_LEN), //in bits 4 means 16 clocks
+    .BIT_LENGTH(BIT_LENGTH)
+)
+master_2(
+    .clk(clk),
+    .rstn(deb_rstn),
+
+    .m_hold(m_hold5),
+    .m_execute(m_execute5),
+    .m_RW(m_RW5),
+    .m_address(m_address5),
+    .m_din(m_din5),
+    .m_dout(m_dout5),
+    .m_dvalid(m_dvalid5),
+    .m_master_bsy(m_master_bsy5),
+
+    .b_grant(m_grants[5]),
+    .b_BUS(b_BUS),
+    .b_request(b_request5),
+    .b_RW(b_RW),
+    .b_bus_utilizing(b_bus_utilizing)
+);
+
+// Master4
+master #(
+    .DATA_WIDTH(DATA_WIDTH),
+    .ADDRS_WIDTH(ADDRS_WIDTH),
+    .TIMEOUT_LEN(TIMEOUT_LEN), //in bits 4 means 16 clocks
+    .BIT_LENGTH(BIT_LENGTH)
+)
+master_4(
+    .clk(clk),
+    .rstn(deb_rstn),
+
+    .m_hold(m_hold5),
+    .m_execute(m_execute5),
+    .m_RW(m_RW5),
+    .m_address(m_address5),
+    .m_din(m_din5),
+    .m_dout(m_dout5),
+    .m_dvalid(m_dvalid5),
+    .m_master_bsy(m_master_bsy5),
+
+    .b_grant(m_grants[5]),
+    .b_BUS(b_BUS),
+    .b_request(b_request5),
+    .b_RW(b_RW),
+    .b_bus_utilizing(b_bus_utilizing)
+);
+
+// Master5
+master #(
+    .DATA_WIDTH(DATA_WIDTH),
+    .ADDRS_WIDTH(ADDRS_WIDTH),
+    .TIMEOUT_LEN(TIMEOUT_LEN), //in bits 4 means 16 clocks
+    .BIT_LENGTH(BIT_LENGTH)
+)
+master_5(
+    .clk(clk),
+    .rstn(deb_rstn),
+
+    .m_hold(m_hold5),
+    .m_execute(m_execute5),
+    .m_RW(m_RW5),
+    .m_address(m_address5),
+    .m_din(m_din5),
+    .m_dout(m_dout5),
+    .m_dvalid(m_dvalid5),
+    .m_master_bsy(m_master_bsy5),
+
+    .b_grant(m_grants[5]),
+    .b_BUS(b_BUS),
+    .b_request(b_request5),
+    .b_RW(b_RW),
+    .b_bus_utilizing(b_bus_utilizing)
+);
+
+///////// Slaves
+
+// Slave000 -0
+display_module(
+    .clk(clk), 
+    .rstn(deb_rstn),
+    .b_grant(m_grants[0]), 
+
+    .bus_util(b_bus_utilizing),
+    .data_bus_serial(b_BUS), 
+    .b_RW(b_RW),
+    .slave_busy(slaves[0]),
+
+    .b_request(),
+    .dout0(),
+    .dout1(),//mux
+    .dout2()
+);
+
+-----------memory slaves instatiate
+
+// Slave101 -3
+slave #(
+    .ADDRESS_WIDTH(ADDRS_WIDTH),
+    .DATA_WIDTH(DATA_WIDTH),
+    .SELF_ID(SLAVE3_ID)
+)
+slave_3
+(
+    .clk(clk), 
+    .rstn(deb_rstn), 
+    .rd_wrt(b_RW), 
+    .bus_util(b_bus_utilizing), 
+    .module_dv(sm_dv3),
+    .data_in_parellel(sm_data3),
+
+    .write_en_internal(sm_write_en_internal3), //make done bidirectional
+    .req_int_data(sm_grant_data3),
+    .data_out_parellel(sm_data_internal3),
+    .addr_buff(sm_address3),
+
+    .data_bus_serial(b_BUS), 
+    .slave_busy(slaves[3])
+);
+
+// Slave100 -4
+slave #(
+    .ADDRESS_WIDTH(ADDRS_WIDTH),
+    .DATA_WIDTH(DATA_WIDTH),
+    .SELF_ID(SLAVE4_ID)
+)
+slave_4
+(
+    .clk(clk), 
+    .rstn(deb_rstn), 
+    .rd_wrt(b_RW), 
+    .bus_util(b_bus_utilizing), 
+    .module_dv(sm_dv3),
+    .data_in_parellel(sm_data3),
+
+    .write_en_internal(sm_write_en_internal3), //make done bidirectional
+    .req_int_data(sm_grant_data3),
+    .data_out_parellel(sm_data_internal3),
+    .addr_buff(sm_address3),
+
+    .data_bus_serial(b_BUS), 
+    .slave_busy(slaves[4])
+);
+
+
+
+
+// Debouncers
+debouncer debounce(
+    .button_in(),
+    .clk(clk),
+    .button_out(deb_));
+
+
+// Pulses
+
+pulse pulse0(
+    .din(deb_),
+    .dout(pul_),
+    .clk(clk),
+    .rstn(deb_rstn)
+);
+
+
+
+// Clocks
 
 
 endmodule
