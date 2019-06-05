@@ -213,6 +213,7 @@ module slave #(
                         1'b0: begin
                             serial_buff         <= 1'b0;
                             ack_counter         <= 1'b1;
+                            write_en_internal   <= 1'b0;
                         end
 
                         1'b1: begin 
@@ -220,7 +221,6 @@ module slave #(
                             ack_counter         <= 1'b0;
                             state               <= BUSY_WRT_TO_MEM;
                             serial_rx_enable    <= 1'b0;
-                            write_en_internal   <= 1'b1;
                             serial_rx_enable    <= 1'b0;
                         end
                     endcase
@@ -228,7 +228,6 @@ module slave #(
 
                 BUSY_WRT_TO_MEM: begin
                     serial_buff             <= 1'bZ;
-                    write_en_internal       <= 1'b0;
                     if (module_dv) state    <= IDLE;
                 end
 
