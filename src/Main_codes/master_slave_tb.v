@@ -152,7 +152,7 @@ begin
 
     @(posedge(sm_write_en_internal));
         //done
-    @(posedge m_dvalid);
+    // @(posedge m_dvalid);
     @(posedge clk);
     m_hold <= 1'b0;
     @(posedge clk);

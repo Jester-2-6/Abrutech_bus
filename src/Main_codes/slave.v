@@ -143,7 +143,6 @@ module slave #(
                 MATCH_SID3: begin
                     if ({slave_match_reg, data_bus_serial} == SELF_ID) begin
                         state               <= ADDR_READ;
-                        slave_busy_reg      <= 1'b1;
                     end else state <= WAIT_FOR_PEER;
                 end
 
@@ -203,29 +202,38 @@ module slave #(
                         if (serial_dv) begin
                             serial_rx_enable    <= 1'b0;
                             data_out_parellel   <= parallel_port_wire[ADDRESS_WIDTH - 1: ADDRESS_WIDTH - DATA_WIDTH];
-                            state               <= TX_DATA_ACK;
+                            state               <= BUSY_WRT_TO_MEM;
                             ack_counter         <= 1'b0;
-                            serial_buff         <= 1'b0;
+                            serial_buff         <= 1'bZ;
+                            write_en_internal   <= 1'b1;
                         end
                     end
                 end
 
-                TX_DATA_ACK: begin
-                    serial_buff         <= 1'b1;
-                    state               <= BUSY_WRT_TO_MEM;
-                    serial_rx_enable    <= 1'b0;
-                    write_en_internal   <= 1'b1;
-                end
-
                 BUSY_WRT_TO_MEM: begin
                     write_en_internal       <= 1'b0;
+                    slave_busy_reg          <= 1'b1;
                     serial_buff             <= 1'bZ;
-                    if (module_dv) state    <= IDLE;
+                    if (module_dv) begin
+                        state    <= TX_DATA_ACK;
+                    end
+                end
+
+                TX_DATA_ACK: begin
+                    if (ack_counter == 0) begin
+                        serial_buff     <= 1'b0;   
+                        ack_counter     <= 1'b1; 
+                    end else begin
+                        state           <= IDLE;
+                        serial_buff     <= 1'b1;   
+                        ack_counter     <= 1'b0; 
+                    end
                 end
 
                 BUSY_RD_FROM_MEM: begin
                     serial_buff     <= 1'bZ;
                     req_int_data    <= 1'b0;
+                    slave_busy_reg  <= 1'b1;
                     if (module_dv) begin
                         parallel_buff[ADDRESS_WIDTH - 1:ADDRESS_WIDTH-DATA_WIDTH]   <= data_in_parellel;
                         state           <= DATA_READY;
@@ -235,7 +243,6 @@ module slave #(
 
                 DATA_READY: if (slave_busy) begin
                     state                   <= TX_DATA_TO_MS;
-                    slave_busy_reg          <= 1'b1;
                     serial_tx_start         <= 1'b1;
                 end
 
