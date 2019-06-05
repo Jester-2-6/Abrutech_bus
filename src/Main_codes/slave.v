@@ -159,7 +159,8 @@ module slave #(
                 end
 
                 WAIT_TIMEOUT: begin
-                    timeout_counter <= timeout_counter + 1'b1;
+                    timeout_counter     <= timeout_counter + 1'b1;
+                    write_en_internal   <= 1'b0;
 
                     if (timeout_counter[3]) begin
                         state <= temp_state_reg;
