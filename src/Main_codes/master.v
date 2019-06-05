@@ -6,7 +6,7 @@ Organization : ABruTECH
 Description  : Master module of the bus
 */
 
-module master_v2(
+module master(
     clk,
     rstn,
 

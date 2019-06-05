@@ -48,7 +48,7 @@ pullup(b_Bus);
 assign b_BUS = slave_drive?slave_out:1'bZ;
 
 // DUT instantiation
-master_v2 #(
+master #(
     .DATA_WIDTH(DATA_WIDTH),
     .ADDRS_WIDTH(ADDRS_WIDTH),
     .TIMEOUT_LEN(TIMEOUT_LEN), //in bits 4 means 16 clocks
@@ -87,9 +87,9 @@ begin
     rstn        <= 1'b1;
     m_hold      <= 1'b0;
     m_execute   <= 1'b0;
-    m_RW        <= 1'b0;
-    m_address   <= {ADDRS_WIDTH{1'b0}};
-    m_din       <= {DATA_WIDTH{1'b0}};
+    m_RW        <= 1'b1;
+    m_address   <= 15'd21845;
+    m_din       <= 8'd113;
     b_grant     <= 1'b0;
     slave_drive <= 1'b0;
     slave_out   <= 1'b1;
@@ -104,10 +104,15 @@ begin
     #(CLK_PERIOD*4);
 
     m_hold <= 1'b1;
+    @(posedge b_request);
+    @(posedge clk);
+    b_grant <= 1'b1;
     @(negedge m_master_bsy);
     m_execute <= 1'b1;
     @(posedge clk);
     m_execute <= 1'b1;
+
+    
 
 
     
