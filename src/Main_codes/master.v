@@ -272,7 +272,7 @@ begin
 
             ADD_ACK_WAIT:
             begin
-                ack_buffer_reg    <= b_BUS;
+                
                 m_dvalid          <= 1'b0;
                 m_master_bsy      <= 1'b1;
                 //bus_in_out_reg    <= 1'b0; // 1: sending data 0: receiving data
@@ -284,15 +284,18 @@ begin
                 begin
                     STATE <= TIMEOUT;
                     b_request         <= 1'b1;
+                    ack_buffer_reg    <= 1'b1;
                 end else if(timeout_reg[TIMEOUT_LEN-1] == 1'b1) begin // Release bus to wait for retrying
                     b_request         <= 1'b0;
                     bus_util_reg      <= 1'b0;
                     bus_in_out_reg    <= 1'b0; // 1: sending data 0: receiving data
+                    ack_buffer_reg    <= 1'b1;
                 end else begin
                     b_request         <= 1'b1;
                     bus_util_reg      <= 1'b1;
                     if({ack_buffer_reg,b_BUS} == ADD_ACK_PATTERN) // ACK received.begin data transmission
                     begin 
+                        ack_buffer_reg    <= 1'b1;
                         bit_length_reg    <= DATA_WIDTH;
                         if(RW_reg) // Write operation
                         begin
@@ -306,6 +309,7 @@ begin
                             converter_send    <= 1'b0; 
                         end
                     end else begin // ACK not yet received
+                        ack_buffer_reg    <= b_BUS;
                         bus_in_out_reg    <= 1'b0; // 1: sending data 0: receiving data
                         converter_send    <= 1'b0; 
                         bit_length_reg    <= ADDRS_WIDTH;
@@ -340,6 +344,7 @@ begin
                     STATE <= TIMEOUT;
                 end
             end
+
 
 
             READ1: // indefinitely listening and freezing

@@ -84,7 +84,7 @@ module parallel_serial #(
     end
 
     always @(bit_length) begin
-        if (bit_length == PARALLEL_PORT_WIDTH) ack_type <= DATA_ACK;
-        else ack_type <= ADDR_ACK;
+        if (bit_length == PARALLEL_PORT_WIDTH) ack_type <= ADDR_ACK;
+        else ack_type <= DATA_ACK;
     end
 endmodule
