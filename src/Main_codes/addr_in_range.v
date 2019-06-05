@@ -1,13 +1,12 @@
 module addr_in_range #(
-    parameter mem_offset = 0,
-    parameter mem_size = 2048,
-    parameter addr_width = 12
+    parameter MEM_OFFSET = 0,
+    parameter MEM_SIZE = 2048,
+    parameter ADDR_WIDTH = 12
 )(
-    input [addr_width - 1:0] addr_in,
-    input addr_in,
+    input [ADDR_WIDTH - 1:0] addr_in,
     output wire in_range
 );
 
-    assign in_range = (mem_offset < addr_in) & (addr_in < mem_offset + mem_size); 
+    assign in_range = (MEM_OFFSET < addr_in) & (addr_in < MEM_OFFSET + MEM_SIZE); 
 
 endmodule
