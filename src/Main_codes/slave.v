@@ -166,6 +166,11 @@ module slave #(
                         state <= temp_state_reg;
                         timeout_counter <= 4'b0;
                     end
+
+                    if (serial_dv) begin
+                        state <= temp_state_reg;
+                        timeout_counter <= 4'b0;
+                    end
                 end
 
                 ADDR_ACK:begin
