@@ -21,11 +21,7 @@ module parallel_serial #(
     localparam START        = 2'd1;
     localparam IN_PROGRESS  = 2'd2;
 
-    localparam DATA_ACK     = 2'b01;
-    localparam ADDR_ACK     = 2'b00;
-
     reg [1:0] state                                 = IDLE;
-    reg [1:0] ack_type                              = ADDR_ACK;
     reg [BIT_LENGTH - 1:0] serial_tx_counter        = {BIT_LENGTH{1'b0}};
     reg [PARALLEL_PORT_WIDTH - 1:0] serial_buffer   = {PARALLEL_PORT_WIDTH{1'b0}};
 
@@ -70,13 +66,5 @@ module parallel_serial #(
                 end
             endcase
         end
-    end
-
-    always @(bit_length) begin
-        case (bit_length)
-            {BIT_LENGTH{1'b1}} : ack_type = ADDR_ACK;
-
-            default : ack_type = DATA_ACK;
-        endcase
     end
 endmodule
