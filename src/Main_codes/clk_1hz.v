@@ -13,9 +13,9 @@ clk_div pll_inst(
 );
 
 always @(posedge clk_1k) begin
-    counter <= counter + 1;
+    counter <= counter + 1'b1;
 
-    if (counter == 9'd500) begin
+    if (counter == 9'd50) begin
         clk_1hz_out <= ~clk_1hz_out;
         counter <= 9'b0;
     end

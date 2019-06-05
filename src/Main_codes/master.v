@@ -1,5 +1,5 @@
 /*
-Module name  : master_v2.v
+Module name  : master.v
 Author 	     : W.M.R.R.Wickramasinghe
 Date Modified: 03/06/2019
 Organization : ABruTECH
@@ -28,7 +28,7 @@ module master(
 
 // Parameters
 parameter DATA_WIDTH  = 8;
-parameter ADDRS_WIDTH = 15;
+parameter ADDRS_WIDTH = 4'd15;
 parameter TIMEOUT_LEN = 6; //in bits 4 means 16 clocks
 parameter BIT_LENGTH  = 4; //size of bit_length port 4=> can 
 
