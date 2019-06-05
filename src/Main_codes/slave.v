@@ -186,6 +186,7 @@ module slave #(
                                 state               <= BUSY_RD_FROM_MEM;
                                 data_dir_inv_s2p    <= 1'b1;
                                 req_int_data        <= 1'b1;
+                                slave_busy_reg  <= 1'b1;
                             end
                         end
                     endcase
@@ -206,34 +207,36 @@ module slave #(
                             ack_counter         <= 1'b0;
                             serial_buff         <= 1'bZ;
                             write_en_internal   <= 1'b1;
+                            slave_busy_reg      <= 1'b1;
                         end
                     end
                 end
 
                 BUSY_WRT_TO_MEM: begin
                     write_en_internal       <= 1'b0;
-                    slave_busy_reg          <= 1'b1;
                     serial_buff             <= 1'bZ;
                     if (module_dv) begin
-                        state    <= TX_DATA_ACK;
+                        state               <= TX_DATA_ACK;
+                        slave_busy_reg      <= 1'b0;
                     end
                 end
 
                 TX_DATA_ACK: begin
-                    if (ack_counter == 0) begin
-                        serial_buff     <= 1'b0;   
-                        ack_counter     <= 1'b1; 
-                    end else begin
-                        state           <= IDLE;
-                        serial_buff     <= 1'b1;   
-                        ack_counter     <= 1'b0; 
+                    if (slave_busy) begin
+                        if (ack_counter == 0) begin
+                            serial_buff     <= 1'b0;   
+                            ack_counter     <= 1'b1; 
+                        end else begin
+                            state           <= IDLE;
+                            serial_buff     <= 1'b1;   
+                            ack_counter     <= 1'b0; 
+                        end
                     end
                 end
 
                 BUSY_RD_FROM_MEM: begin
                     serial_buff     <= 1'bZ;
                     req_int_data    <= 1'b0;
-                    slave_busy_reg  <= 1'b1;
                     if (module_dv) begin
                         parallel_buff[ADDRESS_WIDTH - 1:ADDRESS_WIDTH-DATA_WIDTH]   <= data_in_parellel;
                         state           <= DATA_READY;
