@@ -153,21 +153,14 @@ module slave #(
                         serial_rx_enable    <= 1'b0;
                         read_width          <= DATA_WIDTH;
                         addr_buff           <= {SELF_ID, parallel_port_wire[ADDRESS_WIDTH:0]};
-                        state               <= WAIT_TIMEOUT;
-                        temp_state_reg      <= ADDR_ACK;
+                        state               <= ADDR_ACK;
                     end
                 end
 
                 WAIT_TIMEOUT: begin
                     timeout_counter     <= timeout_counter + 1'b1;
-                    write_en_internal   <= 1'b0;
 
                     if (timeout_counter[3]) begin
-                        state <= temp_state_reg;
-                        timeout_counter <= 4'b0;
-                    end
-
-                    if (module_dv) begin
                         state <= temp_state_reg;
                         timeout_counter <= 4'b0;
                     end
@@ -206,8 +199,7 @@ module slave #(
                         if (serial_dv) begin
                             serial_rx_enable    <= 1'b0;
                             data_out_parellel   <= parallel_port_wire[ADDRESS_WIDTH - 1: ADDRESS_WIDTH - DATA_WIDTH];
-                            state               <= WAIT_TIMEOUT;
-                            temp_state_reg      <= TX_DATA_ACK;
+                            state               <= TX_DATA_ACK;
                             write_en_internal   <= 1'b1;
                             ack_counter         <= 1'b0;
                         end
