@@ -103,7 +103,6 @@ module slave #(
                 IDLE: begin
                     if (~data_bus_serial) begin
                         state                   <= MATCH_SID1;
-                        slave_busy_reg          <= 1'b1;
                     end else begin
                         parallel_buff           <= {DATA_WIDTH{1'b0}};
                         serial_data_counter     <= {DATA_WIDTH_LOG{1'b0}};
@@ -141,6 +140,7 @@ module slave #(
                 MATCH_SID3: begin
                     if ({slave_match_reg, data_bus_serial} == SELF_ID) begin
                         state               <= ADDR_READ;
+                        slave_busy_reg      <= 1'b1;
                     end else state <= WAIT_FOR_PEER;
                 end
 
