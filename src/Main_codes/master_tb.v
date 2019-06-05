@@ -123,7 +123,7 @@ begin
 
     // sending ack from slave
     @(posedge(b_bus_utilizing));
-    pass_clocks(20);
+    pass_clocks(36);
 
 
     @(posedge clk);
