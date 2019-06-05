@@ -174,10 +174,10 @@ begin
                 //address_reg    <= {ADDRS_WIDTH{1'b0}};
                 bus_in_out_reg <= 1'b0; // 1: sending data 0: receiving data
                 timeout_reg    <= {TIMEOUT_LEN{1'b0}};
-                bit_length_reg <= {BIT_LENGTH{1'b0}};
+                bit_length_reg <= ADDRS_WIDTH; // Telling to send address size bits
                 converter_send <= 1'b0; 
                 ack_buffer_reg   <= 1'b1;
-                converter_rd_en<= 1'b0; 
+                converter_rd_en<= 1'b0;                 
                 if(b_grant)
                 begin
                     STATE <= BUS_GRANTED;
@@ -191,19 +191,6 @@ begin
             end
 
 
-            // FREEZE:
-            // begin
-            //     m_dvalid          <= 1'b0;
-            //     b_request         <= 1'b1;
-            //     if(b_grant)
-            //     begin
-            //         STATE <= BUS_GRANTED;
-            //         m_master_bsy <= 1'b1;
-            //     end else begin
-            //         m_master_bsy <= 1'b1;
-            //         STATE <= FREEZE;
-            //     end
-            // end
 
 
             BUS_GRANTED: 
@@ -211,24 +198,28 @@ begin
                 m_dvalid          <= 1'b0;
                 converter_rd_en   <= 1'b0;
                 ack_buffer_reg    <= 1'b1;
-                m_master_bsy      <= 1'b0;
-                bus_util_reg      <= 1'b1;
-                b_request         <= 1'b1;
                 bit_length_reg    <= ADDRS_WIDTH; // Telling to send address size bits
                 timeout_reg       <= {TIMEOUT_LEN{1'b0}};
                 if(~m_hold)
                 begin
                     STATE <= IDLE;
-                // end else if(~b_grant) 
-                // begin
-                //     STATE <= BUS_GRANTED;
-                //     bus_util_reg    <= 1'b0;
-                //     m_master_bsy    <= 1'b1; -----------------// is this needed
-                //     bus_in_out_reg  <= 1'b0; // 1: sending data 0: receiving data
-                //     converter_send  <= 1'b0;
+                    b_request         <= 1'b0;
+                    bus_util_reg    <= 1'b0;
+                    m_master_bsy    <= 1'b0;
+                 end else if(~b_grant) 
+                 begin
+                     STATE           <= BUS_REQUESTED;
+                     bus_util_reg    <= 1'b0;
+                     m_master_bsy    <= 1'b1; // Dont send data from module side
+                     bus_in_out_reg  <= 1'b0; // 1: sending data 0: receiving data
+                     converter_send  <= 1'b0;
+                     b_request         <= 1'b1;
                      
                 end else if (m_execute)
                 begin
+                    m_master_bsy      <= 1'b1;
+                    b_request         <= 1'b1;
+                    bus_util_reg      <= 1'b1;
                     address_reg       <= m_address;
                     conv_parallel_reg <= m_address;
                     RW_reg            <= m_RW;
@@ -243,6 +234,9 @@ begin
                     STATE          <= ADDRESS_SEND;
                 end else begin
                     //data_reg        <= {DATA_WIDTH{1'b0}};
+                    m_master_bsy      <= 1'b0;
+                    b_request         <= 1'b1;
+                    bus_util_reg      <= 1'b1;
                     m_master_bsy   <= 1'b0;
                     converter_send <= 1'b0; 
                     RW_reg         <= 1'b0;
