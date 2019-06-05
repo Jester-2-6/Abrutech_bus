@@ -220,7 +220,6 @@ module slave #(
                             ack_counter         <= 1'b0;
                             state               <= BUSY_WRT_TO_MEM;
                             serial_rx_enable    <= 1'b0;
-                            data_out_parellel   <= parallel_port_wire;
                             write_en_internal   <= 1'b1;
                             serial_rx_enable    <= 1'b0;
                         end
