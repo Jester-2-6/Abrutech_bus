@@ -181,11 +181,11 @@ begin
     sm_dv3 <= 1'b1;
     @(posedge clk);
     sm_dv3 <= 1'b0;
-    
+
     @(posedge m_dvalid5);
-    
-    m_hold5 <= 1'b0;
     @(posedge clk);
+    m_hold5 <= 1'b0;
+    
     @(posedge clk);
     
 
