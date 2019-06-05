@@ -1,0 +1,36 @@
+vlog -reportprogress 300 -work work U:/aba/Desktop_Win/Abrutech_bus/src/Main_codes/bus_controller.sv
+vsim work.bus_controller
+add wave -position insertpoint  sim:/bus_controller/clk 
+add wave -position insertpoint  -radix unsigned     sim:/bus_controller/state
+add wave -position insertpoint  -radix unsigned     sim:/bus_controller/mid_current
+add wave -position insertpoint  sim:/bus_controller/bus_util 
+add wave -position insertpoint  sim:/bus_controller/m_reqs 
+add wave -position insertpoint  sim:/bus_controller/m_grants 
+add wave -position insertpoint  sim:/bus_controller/p_current
+
+force -freeze sim:/bus_controller/clk 1 0, 0 {5 ps} -r 10
+force -freeze sim:/bus_controller/bus_util 0 0
+# ----- ARBITER OPERATION: SAME PRIORITY (P1)
+# START
+force -freeze sim:/bus_controller/m_reqs 000000000000 0
+run 50
+# ------ M-0 requests
+force -freeze sim:/bus_controller/m_reqs 000000000001 0
+run 100
+# ------ M-0 accepts
+force -freeze sim:/bus_controller/bus_util 1 0
+run 100
+# ------ M-1 requests
+force -freeze sim:/bus_controller/m_reqs 000000000011 0
+run 300
+# ------ M-0 master drops and done
+force -freeze sim:/bus_controller/bus_util 0 0
+force -freeze sim:/bus_controller/m_reqs 000000000010 0
+run 100
+# ------ M-1 master accepts
+force -freeze sim:/bus_controller/bus_util 1 0
+run 300
+# ------ M-0 master drops and done
+force -freeze sim:/bus_controller/bus_util 0 0
+force -freeze sim:/bus_controller/m_reqs 000000000000 0
+run 100

@@ -1,0 +1,65 @@
+vlog -reportprogress 300 -work work U:/aba/Desktop_Win/Abrutech_bus/src/Main_codes/bus_controller.sv
+vsim work.bus_controller
+add wave -position insertpoint  sim:/bus_controller/clk 
+add wave -position insertpoint  -radix unsigned     sim:/bus_controller/state
+add wave -position insertpoint  -radix unsigned     sim:/bus_controller/mid_current
+add wave -position insertpoint  sim:/bus_controller/bus_util 
+add wave -position insertpoint  sim:/bus_controller/m_reqs 
+add wave -position insertpoint  sim:/bus_controller/m_grants 
+add wave -position insertpoint  sim:/bus_controller/p_current
+add wave -position insertpoint  sim:/bus_controller/slaves
+add wave -position insertpoint  -radix unsigned     sim:/bus_controller/slaves_mid
+add wave -position insertpoint  sim:/bus_controller/slaves_state
+add wave -position insertpoint  sim:/bus_controller/slave_got_busy
+add wave -position insertpoint  sim:/bus_controller/switch_to_slave
+add wave -position insertpoint  -radix unsigned     sim:/bus_controller/sid_busy
+add wave -position insertpoint  -radix unsigned     sim:/bus_controller/sid_done
+add wave -position insertpoint  sim:/bus_controller/slaves_inout_dir
+add wave -position insertpoint  sim:/bus_controller/any_s_done
+
+force -freeze sim:/bus_controller/clk 1 0, 0 {5 ps} -r 10
+force -freeze sim:/bus_controller/bus_util 0 0
+
+# ----- SPLITTER OPERATION AMONG DIFFERENT PRIORITY (P1-P2)
+# START
+force -freeze sim:/bus_controller/m_reqs 000000000000 0
+run 50
+# ------ M-0 requests
+force -freeze sim:/bus_controller/m_reqs 000000000001 0
+run 100
+# ------ M-0 accepts
+force -freeze sim:/bus_controller/bus_util 1 0
+run 100
+# ------ M-4 requests
+force -freeze sim:/bus_controller/m_reqs 000000010001 0
+run 100
+# ------ S-3 gets busy with M-0
+force -freeze {sim:/bus_controller/slaves[3]} 0 0
+run 100
+# ------ M-0 drops
+force -freeze sim:/bus_controller/bus_util 0 0
+run 100
+# ------ M-4 accepts
+force -freeze sim:/bus_controller/bus_util 1 0
+run 100
+# ------ S-3 gets done with M-0
+force -freeze {sim:/bus_controller/slaves[3]} 1 0
+run 100
+# ------ M-4 drops
+force -freeze sim:/bus_controller/bus_util 0 0
+run 100
+noforce {sim:/bus_controller/slaves[3]}
+# ------ M-0 accepts
+force -freeze sim:/bus_controller/bus_util 1 0
+run 100
+# ------ M-0 drops
+force -freeze sim:/bus_controller/m_reqs 000000010000 0
+force -freeze sim:/bus_controller/bus_util 0 0
+run 100
+# ------ M-4 accepts
+force -freeze sim:/bus_controller/bus_util 1 0
+run 100
+# ------ M-4 drops
+force -freeze sim:/bus_controller/m_reqs 000000000000 0
+force -freeze sim:/bus_controller/bus_util 0 0
+run 100
