@@ -217,20 +217,21 @@ module slave #(
                     serial_buff             <= 1'bZ;
                     if (module_dv) begin
                         state               <= TX_DATA_ACK;
-                        slave_busy_reg      <= 1'b0;
+                        slave_busy_reg      <= 1'b0;   
+                        ack_counter         <= 1'b0;
                     end
                 end
 
                 TX_DATA_ACK: begin
                     if (slave_busy) begin
-                        if (ack_counter == 0) begin
-                            serial_buff     <= 1'b0;   
-                            ack_counter     <= 1'b1; 
-                        end else begin
-                            state           <= IDLE;
-                            serial_buff     <= 1'b1;   
-                            ack_counter     <= 1'b0; 
-                        end
+                        serial_buff     <= 1'b0;   
+                        ack_counter     <= 1'b1; 
+                    end 
+                    
+                    if (ack_counter) begin
+                        state           <= IDLE;
+                        serial_buff     <= 1'b1;   
+                        ack_counter     <= 1'b0; 
                     end
                 end
 
