@@ -28,7 +28,7 @@ module master(
 
 // Parameters
 parameter DATA_WIDTH  = 8;
-parameter ADDRS_WIDTH = 15;
+parameter ADDRS_WIDTH = 4'd15;
 parameter TIMEOUT_LEN = 6; //in bits 4 means 16 clocks
 parameter BIT_LENGTH  = 4; //size of bit_length port 4=> can 
 
