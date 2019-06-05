@@ -1,5 +1,5 @@
 /*
-Module name  : master_v2.v
+Module name  : master.v
 Author 	     : W.M.R.R.Wickramasinghe
 Date Modified: 03/06/2019
 Organization : ABruTECH
