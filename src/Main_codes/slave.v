@@ -121,6 +121,7 @@ module slave #(
                 MATCH_SID1: begin
                     if (~data_bus_serial) begin
                         state               <= MATCH_SID2;
+                        read_width          <= ADDRESS_WIDTH;
                         serial_rx_enable    <= 1'b1;
                         
                     end else state <= WAIT_FOR_PEER;
@@ -134,7 +135,6 @@ module slave #(
                 MATCH_SID3: begin
                     if ({slave_match_reg, data_bus_serial} == SELF_ID) begin
                         state               <= ADDR_READ;
-                        read_width          <= ADDRESS_WIDTH;
                     end else state <= WAIT_FOR_PEER;
                 end
 
