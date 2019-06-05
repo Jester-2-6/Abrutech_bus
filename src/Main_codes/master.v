@@ -54,19 +54,20 @@ output                       b_bus_utilizing;  // Usually pulldown
 
 
 // States
-localparam IDLE             = 4'd0;
-localparam BUS_REQUESTED    = 4'd1;
-localparam BUS_GRANTED      = 4'd2;
-localparam ADDRESS_SEND     = 4'd3;
-localparam ADD_ACK_WAIT     = 4'd4;
-localparam TIMEOUT          = 4'd5;
-localparam READ1            = 4'd6;
-localparam READ2            = 4'd7;
-localparam WRITE            = 4'd8;
-localparam DATA_ACK_WAIT    = 4'd9;
-localparam STATE_SIZE       = 4;     // Change above number width according to this
-localparam DATA_ACK_PATTERN = 2'b01; // Serial DATA/ACK prefix
-localparam ADD_ACK_PATTERN  = 2'b00; // Serial ADDRESS prefix
+localparam IDLE                 = 4'd0;
+localparam BUS_REQUESTED        = 4'd1;
+localparam BUS_GRANTED          = 4'd2;
+localparam WAIT_BFRE_ADDRS_SEND = 4'd3;
+localparam ADDRESS_SEND         = 4'd4;
+localparam ADD_ACK_WAIT         = 4'd5;
+localparam TIMEOUT              = 4'd6;
+localparam READ1                = 4'd7;
+localparam READ2                = 4'd8;
+localparam WRITE                = 4'd9;
+localparam DATA_ACK_WAIT        = 4'd10;
+localparam STATE_SIZE           = 4;     // Change above number width according to this
+localparam DATA_ACK_PATTERN     = 2'b01; // Serial DATA/ACK prefix
+localparam ADD_ACK_PATTERN      = 2'b00; // Serial ADDRESS prefix
 
 
 // Internal wires and registers
@@ -142,7 +143,6 @@ begin
             IDLE:
             begin
                 data_reg       <= {DATA_WIDTH{1'b0}};
-                m_master_bsy   <= 1'b0;
                 m_dvalid       <= 1'b0;
                 RW_reg         <= 1'b0;
                 address_reg    <= {ADDRS_WIDTH{1'b0}};
@@ -157,10 +157,12 @@ begin
                 if(m_hold)
                 begin
                     b_request      <= 1'b1;
+                    m_master_bsy   <= 1'b1;
                     STATE          <= BUS_REQUESTED;
                 end else begin
                     b_request      <= 1'b0;
                     STATE          <= IDLE;
+                    m_master_bsy   <= 1'b0;
                 end
             end
 
@@ -199,21 +201,29 @@ begin
                 converter_rd_en   <= 1'b0;
                 ack_buffer_reg    <= 1'b1;
                 bit_length_reg    <= ADDRS_WIDTH; // Telling to send address size bits
-                timeout_reg       <= {TIMEOUT_LEN{1'b0}};
+                
                 if(~m_hold)
                 begin
                     STATE <= IDLE;
                     b_request         <= 1'b0;
                     bus_util_reg    <= 1'b0;
                     m_master_bsy    <= 1'b0;
+                    timeout_reg       <= {TIMEOUT_LEN{1'b0}};
                  end else if(~b_grant) 
                  begin
-                     STATE           <= BUS_REQUESTED;
+                     
                      bus_util_reg    <= 1'b0;
                      m_master_bsy    <= 1'b1; // Dont send data from module side
                      bus_in_out_reg  <= 1'b0; // 1: sending data 0: receiving data
                      converter_send  <= 1'b0;
-                     b_request         <= 1'b1;
+                     b_request       <= 1'b0;
+                     timeout_reg     <= timeout_reg + 1'b1;
+                     if(timeout_reg[TIMEOUT_LEN-1] == 1'b1)
+                     begin
+                         STATE           <= BUS_REQUESTED;
+                     end else begin
+                         STATE           <= BUS_GRANTED;
+                     end
                      
                 end else if (m_execute)
                 begin
@@ -223,26 +233,79 @@ begin
                     address_reg       <= m_address;
                     conv_parallel_reg <= m_address;
                     RW_reg            <= m_RW;
+                    timeout_reg       <= {TIMEOUT_LEN{1'b0}};
                     if(m_RW) 
                     begin
                         data_reg <= m_din;
                     end else begin
                         data_reg <= {DATA_WIDTH{1'b0}};
                     end
-                    converter_send <= 1'b1; 
-                    bus_in_out_reg <= 1'b1; // 1: sending data 0: receiving data
-                    STATE          <= ADDRESS_SEND;
+                    converter_send <= 1'b0; 
+                    bus_in_out_reg <= 1'b0; // 1: sending data 0: receiving data
+                    STATE          <= WAIT_BFRE_ADDRS_SEND;
                 end else begin
                     //data_reg        <= {DATA_WIDTH{1'b0}};
                     m_master_bsy      <= 1'b0;
                     b_request         <= 1'b1;
                     bus_util_reg      <= 1'b1;
-                    m_master_bsy   <= 1'b0;
-                    converter_send <= 1'b0; 
-                    RW_reg         <= 1'b0;
-                    address_reg    <= {ADDRS_WIDTH{1'b0}};
-                    bus_in_out_reg <= 1'b0; // 1: sending data 0: receiving data
-                    STATE          <= BUS_GRANTED;
+                    m_master_bsy      <= 1'b0;
+                    converter_send    <= 1'b0; 
+                    RW_reg            <= 1'b0;
+                    address_reg       <= {ADDRS_WIDTH{1'b0}};
+                    bus_in_out_reg    <= 1'b0; // 1: sending data 0: receiving data
+                    timeout_reg       <= {TIMEOUT_LEN{1'b0}};
+                    STATE             <= BUS_GRANTED;
+                end
+            end
+
+            WAIT_BFRE_ADDRS_SEND:
+            begin
+                m_dvalid          <= 1'b0;
+                m_master_bsy      <= 1'b1;
+                b_request         <= 1'b1;
+                bit_length_reg    <= ADDRS_WIDTH;
+                converter_rd_en   <= 1'b0; 
+                ack_buffer_reg    <= 1'b1;
+                if(b_grant) 
+                begin
+                    bus_util_reg      <= 1'b1;
+                    timeout_reg <= timeout_reg + 1'b1;
+                    if(timeout_reg[TIMEOUT_LEN-1] == 1'b1)
+                    begin
+                        STATE <= ADDRESS_SEND;
+                        bus_in_out_reg    <= 1'b1; // 1: sending data 0: receiving data
+                        converter_send    <= 1'b1;
+                        conv_parallel_reg <= address_reg;
+                    end else begin
+                        STATE <= WAIT_BFRE_ADDRS_SEND;
+                        bus_in_out_reg    <= 1'b0; // 1: sending data 0: receiving data
+                        converter_send    <= 1'b0;
+                    end
+                end else begin
+                    converter_send    <= 1'b0;
+                    timeout_reg <= {TIMEOUT_LEN{1'b0}};
+                    STATE <= WAIT_BFRE_ADDRS_SEND;
+                    bus_util_reg      <= 1'b0;
+                    bus_in_out_reg    <= 1'b0; // 1: sending data 0: receiving data
+                end
+
+
+
+
+
+                if(timeout_reg[TIMEOUT_LEN-1]== 1'b1)
+                begin
+                    STATE <= ADDRESS_SEND;
+                    converter_send <= 1'b1; 
+                    bus_util_reg   <= 1'b1;
+                    bus_in_out_reg <= 1'b1; // 1: sending data 0: receiving data
+                end else begin
+                    if(b_grant) begin
+                        timeout_reg <= timeout_reg + 1'b1;
+                        bus_util_reg      <= 1'b1;
+                    end else begin
+                        bus_util_reg      <= 1'b0;
+                    end
                 end
             end
 
