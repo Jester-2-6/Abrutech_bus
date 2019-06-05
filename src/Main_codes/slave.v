@@ -57,7 +57,6 @@ module slave #(
     reg [DATA_WIDTH - 1:0] read_width               = {DATA_WIDTH{1'b0}};
     reg [3:0] state                                 = IDLE;
     reg [ADDRESS_WIDTH - 1:0] parallel_buff         = {ADDRESS_WIDTH{1'b0}};
-    reg [DATA_WIDTH_LOG - 1:0] serial_data_counter  = {DATA_WIDTH_LOG{1'b0}};
     reg [3:0] timeout_counter                       = 4'b0;
     reg [3:0] temp_state_reg                        = 4'b0;
     reg [1:0] slave_match_reg                       = 2'b0;
@@ -89,7 +88,6 @@ module slave #(
             //reset logic
             state                   <= IDLE;
             parallel_buff           <= {DATA_WIDTH{1'b0}};
-            serial_data_counter     <= {DATA_WIDTH_LOG{1'b0}};
             write_en_internal       <= 1'b0;
             data_dir_inv_s2p        <= 1'b0;
             addr_buff               <= {ADDRESS_WIDTH{1'b0}};
@@ -107,7 +105,6 @@ module slave #(
                         state                   <= MATCH_SID1;
                     end else begin
                         parallel_buff           <= {DATA_WIDTH{1'b0}};
-                        serial_data_counter     <= {DATA_WIDTH_LOG{1'b0}};
                         write_en_internal       <= 1'b0;
                         data_dir_inv_s2p        <= 1'b0;
                         addr_buff               <= {ADDRESS_WIDTH{1'b0}};
@@ -155,7 +152,7 @@ module slave #(
                     if (serial_dv) begin
                         serial_rx_enable    <= 1'b0;
                         read_width          <= DATA_WIDTH;
-                        addr_buff           <= {SELF_ID, parallel_port_wire[ADDRESS_WIDTH:0]};
+                        addr_buff           <= parallel_port_wire;
                         state               <= ADDR_ACK;
                     end
                 end
