@@ -189,8 +189,9 @@ module slave #(
                 end
 
                 BUSY_RD_FROM_MEM: begin
+                    serial_buff     <= 1'bZ;
                     if (module_dv) begin
-                        parallel_buff   <= data_in_parellel;
+                        parallel_buff[ADDRESS_WIDTH - 1:ADDRESS_WIDTH-DATA_WIDTH]   <= data_in_parellel;
                         state           <= DATA_READY;
                         slave_busy_reg  <= 1'b0;
                     end
