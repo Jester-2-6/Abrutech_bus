@@ -21,7 +21,8 @@ module slave #(
     output reg [DATA_WIDTH - 1:0] data_out_parellel = {DATA_WIDTH{1'b0}},
     output reg [ADDRESS_WIDTH -1:0] addr_buff              = {ADDRESS_WIDTH{1'b0}},
 
-    inout data_bus_serial, slave_busy
+    inout data_bus_serial, 
+    inout slave_busy
 );
 
     localparam IDLE                = 4'd0 ;
