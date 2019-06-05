@@ -14,7 +14,7 @@ localparam ADDRESS_WIDTH = 15;
 wire [DATA_WIDTH - 1:0] data_out_parellel;
 wire update_disp;
 
-reg [DATA_WIDTH - 1:0] display_buffer;
+reg [DATA_WIDTH - 1:0] display_buffer = {DATA_WIDTH{1'b0}};
 
 
 slave #(
@@ -42,6 +42,75 @@ bi2bcd display(
     .dout0(dout2)
 );
 
-always @(posedge update_disp) display_buffer <= data_in_parellel;
+always @(posedge update_disp) display_buffer <= data_out_parellel;
 
 endmodule
+
+/*
+force -freeze sim:/disp_slave/clk 1 0, 0 {50 ps} -r 100
+force -freeze sim:/disp_slave/rstn 0 0
+run
+force -freeze sim:/disp_slave/rstn St1 0
+run
+force -freeze sim:/disp_slave/rd_wrt 1 0
+run
+force -freeze sim:/disp_slave/data_bus_serial 0 0
+run
+run
+run
+force -freeze sim:/disp_slave/data_bus_serial 1 0
+force -freeze sim:/disp_slave/data_bus_serial 0 0
+run
+force -freeze sim:/disp_slave/data_bus_serial 1 0
+run
+force -freeze sim:/disp_slave/data_bus_serial 0 0
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+force -freeze sim:/disp_slave/data_bus_serial 1 0
+run
+force -freeze sim:/disp_slave/data_bus_serial 0 0
+run
+force -freeze sim:/disp_slave/data_bus_serial 1 0
+run
+force -freeze sim:/disp_slave/data_bus_serial 0 0
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+run
+force -freeze sim:/disp_slave/data_bus_serial 1 0
+run
+force -freeze sim:/disp_slave/data_bus_serial 0 0
+run
+force -freeze sim:/disp_slave/data_bus_serial 1 0
+run
+force -freeze sim:/disp_slave/data_bus_serial 0 0
+force -freeze sim:/disp_slave/data_bus_serial 1 0
+run
+force -freeze sim:/disp_slave/data_bus_serial 0 0
+run
+force -freeze sim:/disp_slave/data_bus_serial 1 0
+run
+*/
