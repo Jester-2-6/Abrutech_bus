@@ -28,17 +28,18 @@ module slave #(
     localparam IDLE                = 4'd0 ;
     localparam MATCH_SID1          = 4'd1 ;
     localparam MATCH_SID2          = 4'd2 ;
-    localparam WAIT_FOR_PEER       = 4'd3 ;
-    localparam ADDR_READ           = 4'd4 ;
-    localparam ADDR_ACK            = 4'd5 ;
-    localparam RX_DATA_FROM_MS     = 4'd6 ;
-    localparam TX_DATA_ACK         = 4'd7 ;
-    localparam BUSY_WRT_TO_MEM     = 4'd8 ;
-    localparam BUSY_RD_FROM_MEM    = 4'd9 ;
-    localparam DATA_READY          = 4'd10;
-    localparam TX_DATA_TO_MS       = 4'd11;
-    localparam CLEANUP             = 4'd12;
-    localparam WAIT_TIMEOUT        = 4'd13;
+    localparam MATCH_SID3          = 4'd3 ;
+    localparam WAIT_FOR_PEER       = 4'd4 ;
+    localparam ADDR_READ           = 4'd5 ;
+    localparam ADDR_ACK            = 4'd6 ;
+    localparam RX_DATA_FROM_MS     = 4'd7 ;
+    localparam TX_DATA_ACK         = 4'd8 ;
+    localparam BUSY_WRT_TO_MEM     = 4'd9 ;
+    localparam BUSY_RD_FROM_MEM    = 4'd10;
+    localparam DATA_READY          = 4'd11;
+    localparam TX_DATA_TO_MS       = 4'd12;
+    localparam CLEANUP             = 4'd13;
+    localparam WAIT_TIMEOUT        = 4'd14;
 
     localparam DATA_WIDTH_LOG = $clog2(DATA_WIDTH);
 
@@ -118,11 +119,16 @@ module slave #(
                 end
 
                 MATCH_SID1: begin
-                    slave_match_reg <= data_bus_serial;
-                    state           <= MATCH_SID2;
+                    if (~data_bus_serial) state <= MATCH_SID2;
+                    else state <= WAIT_FOR_PEER;
                 end
 
                 MATCH_SID2: begin
+                    slave_match_reg <= data_bus_serial;
+                    state           <= MATCH_SID3;
+                end
+
+                MATCH_SID3: begin
                     if ({slave_match_reg, data_bus_serial} == SELF_ID) begin
                         state               <= ADDR_READ;
                         read_width          <= ADDRESS_WIDTH - 2;
