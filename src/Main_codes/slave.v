@@ -155,7 +155,7 @@ module slave #(
                     if (serial_dv) begin
                         serial_rx_enable    <= 1'b0;
                         read_width          <= DATA_WIDTH;
-                        addr_buff           <= {SELF_ID, parallel_port_wire[ADDRESS_WIDTH:0]};
+                        addr_buff           <= parallel_port_wire;
                         state               <= ADDR_ACK;
                     end
                 end
