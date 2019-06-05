@@ -56,7 +56,7 @@ reg [3:0]   mid_search  = MID_NONE;
 reg [3:0]   mid_grant   = MID_NONE;// 1111 => None granted
 reg [11:0]  mid_blocked = 12'b000000000000;
 
-reg [5:0] slaves_inout_reg    = 6'b111111; // Pulled up
+reg [5:0] slaves_inout_reg    = 6'b000000; // Pulled down
 reg [5:0] slaves_inout_dir    = 6'b111111; // All inputs
 
 reg [1:0]   slaves_state[5:0] = '{SLAVE_FREE, SLAVE_FREE, SLAVE_FREE, 
@@ -134,7 +134,7 @@ always @ (posedge clk, negedge rstn) begin
         mid_search              <= MID_NONE;
         mid_grant               <= MID_NONE;// 1111 => None granted
         mid_blocked             <= 12'b000000000000;
-        slaves_inout_reg        <= 6'b111111; // Pulled up
+        slaves_inout_reg        <= 6'b000000; // Pulled down
         slaves_inout_dir        <= 6'b111111; // All inputs
         slaves_state[5:0]       <= '{SLAVE_FREE, SLAVE_FREE, SLAVE_FREE,
                                     SLAVE_FREE, SLAVE_FREE, SLAVE_FREE};
@@ -271,14 +271,14 @@ always @ (posedge clk, negedge rstn) begin
 
             ACK_SLAVE_1: begin
                 slaves_inout_dir[sid_done]  <= 0; // Make output
-                slaves_inout_reg[sid_done]  <= 0; // send one bit
+                slaves_inout_reg[sid_done]  <= 1; // send one bit
                 
                 state <= ACK_SLAVE_2;
             end
 
             ACK_SLAVE_2: begin
                 slaves_inout_dir[sid_done]  <= 1; // Make input
-                slaves_inout_reg[sid_done]  <= 1;
+                slaves_inout_reg[sid_done]  <= 0;
 
                 slaves_mid[sid_done]        <= MID_NONE;
                 slaves_state[sid_done]      <= SLAVE_FREE;
@@ -293,7 +293,7 @@ always @ (posedge clk, negedge rstn) begin
 
         // Check if a slave just got BUSY.
         for (int i = 0; i < 6; i=i+1) begin
-            if ((slaves_state[i] == SLAVE_FREE) & (slaves[i] == 0) & slaves_inout_dir[i]==1) begin
+            if ((slaves_state[i] == SLAVE_FREE) & (slaves[i] == 1) & slaves_inout_dir[i]==1) begin
                 slaves_state[i] <= SLAVE_BUSY; 
                 slave_got_busy  <= 1;
                 sid_busy        <= i;
@@ -302,7 +302,7 @@ always @ (posedge clk, negedge rstn) begin
         
         // Check if a slave just got DONE.
         for (int i = 0; i < 6; i=i+1) begin
-            if ((slaves_state[i] == SLAVE_BUSY) & (slaves[i] == 1) & slaves_inout_dir[i]==1) begin
+            if ((slaves_state[i] == SLAVE_BUSY) & (slaves[i] == 0) & slaves_inout_dir[i]==1) begin
                 slaves_state[i]     <= SLAVE_DONE;
             end
         end
