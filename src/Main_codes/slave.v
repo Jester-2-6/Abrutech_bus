@@ -8,7 +8,7 @@ Description  : Slave module of the bus
 module slave #(
     parameter ADDRESS_WIDTH = 15,
     parameter DATA_WIDTH = 8,
-    parameter SELF_ID = 2'b0
+    parameter SELF_ID = 3'b0
 )(
     input clk, 
     input rstn, 
@@ -50,7 +50,6 @@ module slave #(
     reg serial_tx_start         = 1'b0;
     reg data_dir_inv_s2p        = 1'b0;
     reg slave_busy_reg          = 1'b0;
-    reg slave_match_reg         = 1'b0;
     reg ack_counter             = 1'b0;
     reg serial_buff             = 1'bZ;
 
@@ -60,6 +59,7 @@ module slave #(
     reg [DATA_WIDTH_LOG - 1:0] serial_data_counter  = {DATA_WIDTH_LOG{1'b0}};
     reg [3:0] timeout_counter                       = 4'b0;
     reg [3:0] temp_state_reg                        = 4'b0;
+    reg [1:0] slave_match_reg                       = 2'b0;
 
     serial_parallel_2way #(
         .PORT_WIDTH(ADDRESS_WIDTH),
@@ -128,8 +128,14 @@ module slave #(
                 end
 
                 MATCH_SID2: begin
-                    slave_match_reg <= data_bus_serial;
-                    state           <= MATCH_SID3;
+                    if (ack_counter == 1'b0) begin 
+                        slave_match_reg[1]  <= data_bus_serial;
+                        ack_counter         <= 1'b1;
+                    end else begin
+                        state               <= MATCH_SID3;
+                        ack_counter         <= 1'b0;
+                        slave_match_reg[0]  <= data_bus_serial;
+                    end
                 end
 
                 MATCH_SID3: begin
