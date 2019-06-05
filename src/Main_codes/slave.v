@@ -172,8 +172,10 @@ module slave #(
                             serial_buff  <= 1'b0;
                             ack_counter  <= 1'b0;
 
-                            if (rd_wrt) state       <= RX_DATA_FROM_MS;
-                            else begin
+                            if (rd_wrt) begin
+                                state       <= RX_DATA_FROM_MS;
+                                ack_counter <= 1'b1;
+                            end else begin
                                 state               <= BUSY_RD_FROM_MEM;
                                 data_dir_inv_s2p    <= 1'b1;
                             end
@@ -182,16 +184,20 @@ module slave #(
                 end 
 
                 RX_DATA_FROM_MS: begin
-                    serial_rx_enable        <= 1'b1;
-                    serial_buff             <= 1'bZ;
+                    if (serial_buff == 0) begin 
+                        serial_buff <= 1'bZ;
+                    end else begin
+                        ack_counter <= data_bus_serial;
 
-                    if (serial_dv) begin
-                        serial_rx_enable    <= 1'b0;
-                        data_out_parellel   <= parallel_port_wire;
-                        state               <= WAIT_TIMEOUT;
-                        temp_state_reg      <= TX_DATA_ACK;
-                        write_en_internal   <= 1'b1;
-                        serial_rx_enable    <= 1'b0;
+                        if ({ack_counter, data_bus_serial} == 2'b01) serial_rx_enable <= 1'b1;
+
+                        if (serial_dv) begin
+                            serial_rx_enable    <= 1'b0;
+                            data_out_parellel   <= parallel_port_wire[ADDRESS_WIDTH - 1: ADDRESS_WIDTH - DATA_WIDTH];
+                            state               <= WAIT_TIMEOUT;
+                            temp_state_reg      <= TX_DATA_ACK;
+                            write_en_internal   <= 1'b1;
+                        end
                     end
                 end
 
