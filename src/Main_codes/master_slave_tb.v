@@ -135,6 +135,8 @@ begin
     arbiter_drive<= 1'b0;
     arb_out     <= 1'b1;
 
+
+    // Write to slave
     @(posedge clk);
     m_hold <= 1'b1;
     @(posedge b_request);
@@ -148,9 +150,33 @@ begin
 
     @(posedge(sm_write_en_internal));
     @(posedge clk);
+    @(posedge clk);
+    @(posedge clk);
     sm_dv <= 1'b1;
     @(posedge clk);
     sm_dv <= 1'b0;
+
+    //done
+    @(posedge m_dvalid);
+    @(posedge clk);
+    m_hold <= 1'b0;
+
+    // Read From slave
+    pass_clocks(10);
+
+
+    @(posedge clk);
+    m_hold <= 1'b1;
+    @(posedge b_request);
+    @(posedge clk);
+    b_grant <= 1'b1;
+    @(negedge m_master_bsy);
+    @(posedge clk);
+    m_execute <= 1'b1;
+    m_address   <= EXAMPLE_ADDR;
+    m_RW        <= 1'b0;
+    @(posedge clk);
+    m_execute <= 1'b0;
 
     //done
     @(posedge m_dvalid);
@@ -168,6 +194,21 @@ task async_reset;
         rstn      <= 1'b0;
         #(CLK_PERIOD*2);
         rstn      <= 1'b1;   
+    end  
+endtask 
+
+
+task pass_clocks;     
+    input num_clks;
+    integer num_clks;
+    
+    //input [3:0] load_value;     
+    begin: psclk//@(negedge clk_50);
+        integer i;
+        for( i=0; i<num_clks; i=i+1)
+        begin
+            @(posedge clk);
+        end
     end  
 endtask 
 
