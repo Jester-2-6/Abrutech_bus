@@ -26,8 +26,8 @@ localparam SLAVE3_ID = 3'b101;
 reg                        clk         = 1'b0;
 reg                        rstn        = 1'b1;
 
-// Common
-wire [11:0] b_request;
+// // Common
+// wire [11:0] b_request;
 
 // Arbiter
 wire [11:0] m_reqs;
