@@ -18,6 +18,7 @@ module slave #(
     input [DATA_WIDTH - 1:0] data_in_parellel,
 
     output reg write_en_internal = 1'b0, //make done bidirectional
+    output reg req_int_data      = 1'b0,
     output reg [DATA_WIDTH - 1:0] data_out_parellel = {DATA_WIDTH{1'b0}},
     output reg [ADDRESS_WIDTH -1:0] addr_buff              = {ADDRESS_WIDTH{1'b0}},
 
@@ -97,6 +98,7 @@ module slave #(
             serial_buff             <= 1'bZ;
             timeout_counter         <= 4'b0;
             temp_state_reg          <= 4'b0;
+            req_int_data            <= 1'b0;
 
         end else begin
             case (state)
@@ -114,6 +116,7 @@ module slave #(
                         serial_buff             <= 1'bZ;
                         timeout_counter         <= 4'b0;
                         temp_state_reg          <= 4'b0;
+                        req_int_data            <= 1'b0;
                     end
                 end
 
@@ -183,6 +186,7 @@ module slave #(
                             end else begin
                                 state               <= BUSY_RD_FROM_MEM;
                                 data_dir_inv_s2p    <= 1'b1;
+                                req_int_data        <= 1'b1;
                             end
                         end
                     endcase
@@ -221,6 +225,7 @@ module slave #(
 
                 BUSY_RD_FROM_MEM: begin
                     serial_buff     <= 1'bZ;
+                    req_int_data    <= 1'b0;
                     if (module_dv) begin
                         parallel_buff[ADDRESS_WIDTH - 1:ADDRESS_WIDTH-DATA_WIDTH]   <= data_in_parellel;
                         state           <= DATA_READY;
