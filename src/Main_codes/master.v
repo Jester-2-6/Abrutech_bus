@@ -148,7 +148,7 @@ begin
 
             IDLE:
             begin
-                data_reg       <= {DATA_WIDTH{1'b0}};
+                //data_reg       <= {DATA_WIDTH{1'b0}};
                 m_dvalid       <= 1'b0;
                 RW_reg         <= 1'b0;
                 address_reg    <= {ADDRS_WIDTH{1'b0}};
