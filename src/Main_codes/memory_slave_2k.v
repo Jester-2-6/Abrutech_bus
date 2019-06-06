@@ -21,7 +21,7 @@ module memory_slave_2k #(
     output wire [6:0] disp_out1, 
     output wire [6:0] disp_out0,        
 
-    inout data_bus_serial, 
+    inout data_bus_serial
 );
 
     wire [DATA_WIDTH - 1:0]     data_in_parellel;

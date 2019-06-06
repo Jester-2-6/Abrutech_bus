@@ -112,7 +112,8 @@ wire [DATA_WIDTH-1:0]    sm_data_internal;
 wire [ADDRS_WIDTH-1:0]   sm_address;
 wire                     sm_grant_data;
 // BUS side
-wire   (weak0,strong1)   slv_bsy ;
+wire   slv_bsy ;
+pullup(slv_bsy);
 
 // ARBITER
 reg                      arbiter_drive = 1'b0;
@@ -194,7 +195,6 @@ slave_0
     .disp_out0(ss0),
 
     .data_bus_serial(b_BUS), 
-    .slave_busy(slv_bsy)
 );
 
 

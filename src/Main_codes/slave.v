@@ -182,7 +182,7 @@ module slave #(
                                 state               <= BUSY_RD_FROM_MEM;
                                 data_dir_inv_s2p    <= 1'b1;
                                 req_int_data        <= 1'b1;
-                                busy_out            <= 1'b0;
+                                busy_out            <= 1'b1;
                             end
                         end
                     endcase
@@ -212,9 +212,15 @@ module slave #(
                     write_en_internal       <= 1'b0;
                     serial_buff             <= 1'bZ;
                     if (module_dv) begin
-                        state               <= TX_DATA_ACK;
+                        ack_counter         <= 1'b1;
                         busy_out            <= 1'b0;   
-                        ack_counter         <= 1'b0;
+                    end
+
+                    if (ack_counter == 1'b1) begin
+                        if (arbiter_cmd_in) begin
+                            state               <= TX_DATA_ACK;
+                            ack_counter         <= 1'b0;
+                        end
                     end
                 end
 
