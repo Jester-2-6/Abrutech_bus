@@ -232,7 +232,7 @@ master_2(
     .b_BUS(b_BUS),
     .b_request(b_request2),
     .b_RW(b_RW),
-    .state(st2) //remove
+    .state(st2), //remove
     .b_bus_utilizing(b_bus_utilizing)
 );
     wire [3:0] st2; //remove

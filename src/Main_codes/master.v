@@ -53,8 +53,8 @@ output reg                   b_request = 1'b0;
 output                       b_RW;             // Usually pulldown
 output                       b_bus_utilizing;  // Usually pulldown
 /// remove after debugging
-output [3:0]state; //remove
-assign state <= STATE;//remove
+output [3:0] state; //remove
+assign state = IDLE;//remove
 ///
 
 // States
