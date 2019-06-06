@@ -11,7 +11,13 @@ module bus_controller (
     rstn,
     m_reqs,
     m_grants,
-    slaves,
+    // slaves,
+    slave_0,
+    slave_1,
+    slave_2,
+    slave_3,
+    slave_4,
+    slave_5,
     bus_util,
     state,
     mid_current
@@ -22,7 +28,8 @@ input       rstn;
 input       bus_util;
 input  wire [11:0]      m_reqs;
 output reg  [11:0]      m_grants = 12'b000000000000;
-inout       [5:0]       slaves;
+// inout       [5:0]       slaves;
+inout       slave_0, slave_1, slave_2, slave_3, slave_4, slave_5;
 
 // Parameters:
 parameter MID_NONE      = 4'b1111;
@@ -81,12 +88,19 @@ wire [1:0] p_current;
 assign p_current = mid_current[3:2];
 
 // slaves inout is input when dir = 1 and output (reg) when dir = 0
-assign slaves[0] = slaves_inout_dir[0] ? 1'bz : slaves_inout_reg[0];
-assign slaves[1] = slaves_inout_dir[1] ? 1'bz : slaves_inout_reg[1];
-assign slaves[2] = slaves_inout_dir[2] ? 1'bz : slaves_inout_reg[2];
-assign slaves[3] = slaves_inout_dir[3] ? 1'bz : slaves_inout_reg[3];
-assign slaves[4] = slaves_inout_dir[4] ? 1'bz : slaves_inout_reg[4];
-assign slaves[5] = slaves_inout_dir[5] ? 1'bz : slaves_inout_reg[5];
+// assign slaves[0] = slaves_inout_dir[0] ? 1'bZ : slaves_inout_reg[0];
+// assign slaves[1] = slaves_inout_dir[1] ? 1'bZ : slaves_inout_reg[1];
+// assign slaves[2] = slaves_inout_dir[2] ? 1'bZ : slaves_inout_reg[2];
+// assign slaves[3] = slaves_inout_dir[3] ? 1'bZ : slaves_inout_reg[3];
+// assign slaves[4] = slaves_inout_dir[4] ? 1'bZ : slaves_inout_reg[4];
+// assign slaves[5] = slaves_inout_dir[5] ? 1'bZ : slaves_inout_reg[5];
+
+assign slave_0 = slaves_inout_dir[0] ? 1'bZ : slaves_inout_reg[0];
+assign slave_1 = slaves_inout_dir[1] ? 1'bZ : slaves_inout_reg[1];
+assign slave_2 = slaves_inout_dir[2] ? 1'bZ : slaves_inout_reg[2];
+assign slave_3 = slaves_inout_dir[3] ? 1'bZ : slaves_inout_reg[3];
+assign slave_4 = slaves_inout_dir[4] ? 1'bZ : slaves_inout_reg[4];
+assign slave_5 = slaves_inout_dir[5] ? 1'bZ : slaves_inout_reg[5];
 
 
 // Filter requests by ~blocked bit and take
@@ -292,20 +306,58 @@ always @ (posedge clk, negedge rstn) begin
         endcase
 
         // Check if a slave just got BUSY.
-        for (int i = 0; i < 6; i=i+1) begin
-            if ((slaves_state[i] == SLAVE_FREE) & (slaves[i] == 1) & slaves_inout_dir[i]==1) begin
-                slaves_state[i] <= SLAVE_BUSY; 
-                slave_got_busy  <= 1;
-                sid_busy        <= i;
-            end
-        end
+        // for (int i = 0; i < 6; i=i+1) begin
+        //     if ((slaves_state[i] == SLAVE_FREE) & (slaves[i] == 1) & slaves_inout_dir[i]==1) begin
+        //         slaves_state[i] <= SLAVE_BUSY; 
+        //         slave_got_busy  <= 1;
+        //         sid_busy        <= i;
+        //     end
+        // end
         
-        // Check if a slave just got DONE.
-        for (int i = 0; i < 6; i=i+1) begin
-            if ((slaves_state[i] == SLAVE_BUSY) & (slaves[i] == 0) & slaves_inout_dir[i]==1) begin
-                slaves_state[i]     <= SLAVE_DONE;
-            end
+        // // Check if a slave just got DONE.
+        // for (int i = 0; i < 6; i=i+1) begin
+        //     if ((slaves_state[i] == SLAVE_BUSY) & (slaves[i] == 0) & slaves_inout_dir[i]==1) begin
+        //         slaves_state[i]     <= SLAVE_DONE;
+        //     end
+        // end
+
+        if ((slaves_state   [0] == SLAVE_FREE) & (slave_0 == 1) & slaves_inout_dir[0]==1) begin
+                slaves_state[0] <= SLAVE_BUSY; 
+                slave_got_busy  <= 1;
+                sid_busy        <= 0;
         end
+        if ((slaves_state   [1] == SLAVE_FREE) & (slave_1 == 1) & slaves_inout_dir[1]==1) begin
+                slaves_state[1] <= SLAVE_BUSY; 
+                slave_got_busy  <= 1;
+                sid_busy        <= 1;
+        end
+        if ((slaves_state   [2] == SLAVE_FREE) & (slave_2 == 1) & slaves_inout_dir[2]==1) begin
+                slaves_state[2] <= SLAVE_BUSY; 
+                slave_got_busy  <= 1;
+                sid_busy        <= 2;
+        end
+        if ((slaves_state   [3] == SLAVE_FREE) & (slave_3 == 1) & slaves_inout_dir[3]==1) begin
+                slaves_state[3] <= SLAVE_BUSY; 
+                slave_got_busy  <= 1;
+                sid_busy        <= 3;
+        end
+        if ((slaves_state   [4] == SLAVE_FREE) & (slave_4 == 1) & slaves_inout_dir[4]==1) begin
+                slaves_state[4] <= SLAVE_BUSY; 
+                slave_got_busy  <= 1;
+                sid_busy        <= 4;
+        end
+        if ((slaves_state   [5] == SLAVE_FREE) & (slave_5 == 1) & slaves_inout_dir[5]==1) begin
+                slaves_state[5] <= SLAVE_BUSY; 
+                slave_got_busy  <= 1;
+                sid_busy        <= 5;
+        end
+
+        if ((slaves_state[0] == SLAVE_BUSY) & (slave_0 == 0) & slaves_inout_dir[0]==1)  slaves_state[0] <= SLAVE_DONE;
+        if ((slaves_state[1] == SLAVE_BUSY) & (slave_1 == 0) & slaves_inout_dir[1]==1)  slaves_state[1] <= SLAVE_DONE;
+        if ((slaves_state[2] == SLAVE_BUSY) & (slave_2 == 0) & slaves_inout_dir[2]==1)  slaves_state[2] <= SLAVE_DONE;
+        if ((slaves_state[3] == SLAVE_BUSY) & (slave_3 == 0) & slaves_inout_dir[3]==1)  slaves_state[3] <= SLAVE_DONE;
+        if ((slaves_state[4] == SLAVE_BUSY) & (slave_4 == 0) & slaves_inout_dir[4]==1)  slaves_state[4] <= SLAVE_DONE;
+        if ((slaves_state[5] == SLAVE_BUSY) & (slave_5 == 0) & slaves_inout_dir[5]==1)  slaves_state[5] <= SLAVE_DONE;
 
     end
 

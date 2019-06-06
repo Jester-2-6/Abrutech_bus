@@ -23,34 +23,31 @@ module ext_interface #(
 
     b_grant,
     b_request,
-    b_RW,
+    b_RW
 );
-parameter   PACKET_WIDTH= 10;
-parameter   DATA_WIDTH  = 8;
-parameter   ADDRS_WIDTH = 15;
-parameter   PORT_WIDTH  = 10;
-parameter   BIT_LENGTH  = 4;
-parameter   TIMEOUT_LEN = 6;
+localparam   PACKET_WIDTH= 10;
+localparam   DATA_WIDTH  = 8;
+localparam   ADDRS_WIDTH = 15;
+localparam   PORT_WIDTH  = 10;
+localparam   BIT_LENGTH  = 4;
+localparam   TIMEOUT_LEN = 6;
 
-parameter   RX_MODE     = 0;
-parameter   TX_MODE     = 1;
-parameter   TX_MANUAL   = 0;
-parameter   TX_CONVERTER= 1;
+localparam   RX_MODE     = 1'b0;
+localparam   TX_MODE     = 1'b1;
+localparam   TX_MANUAL   = 1'b0;
+localparam   TX_CONVERTER= 1'b1;
 
-parameter   DISPLAY_ADDRESS = 15'd0;
+localparam   DISPLAY_ADDRESS = 15'd0;
 
 input       clk;
 input       rstn;
-
 output      tx;
 input       rx;
 inout       bus;
-
 inout       b_util;
 inout       slave_busy;
-
 input       b_grant;
-output reg  b_request = 1'b0;
+output      b_request;
 inout       b_RW;             // Usually pulldown
 
 reg                     mode        = RX_MODE;
@@ -71,6 +68,8 @@ wire [DATA_WIDTH - 1:0] s_out_data;
 reg                     s_in_dv     = 1;
 reg [DATA_WIDTH-1:0]    s_in_data   = 0;
 
+reg                     c_rst_reg   = 0;
+wire                    c_rst_wire;
 reg                     c_in_dv     = 0;
 reg                     c_en_s2p    = 0;
 wire                    c_out_dv;
@@ -83,6 +82,7 @@ reg                     tx_manual_reg = 1; // TX is normally high
 
 reg [15:0]  baud_size   = BAUD_SIZE;
 reg [15:0]  count       = 16'd0;
+reg [15:0]   count_20    = 16'd0;
 reg         baud_clk    = 16'd0;
 wire[15:0]  half_baud_size;
 
@@ -90,6 +90,7 @@ wire[15:0]  half_baud_size;
 assign c_p_wire         =  mode         ? c_p_reg   : {PACKET_WIDTH{1'bZ}};
 assign c_s_wire         =  mode         ? 1'bZ      : rx;
 assign tx               =  tx_control   ? c_s_wire  : tx_manual_reg;
+assign c_rst_wire       =  c_rst_reg    ? 0         : rstn;
 
 assign half_baud_size   = {1'b0, baud_size[15:1]};
 
@@ -150,7 +151,7 @@ serial_parallel_2way#(
 )
 converter(
     .clk(baud_clk), 
-    .rstn(rstn), 
+    .rstn(c_rst_wire), 
     .dv_in(c_in_dv), 
     .invert_s2p(mode), 
     .en(c_en_s2p),
@@ -188,20 +189,48 @@ localparam TX_4_TRANSMIT_3  = 5'd20;
 localparam TX_4_TRANSMIT_4  = 5'd21;
 localparam TX_4_TRANSMIT_5  = 5'd22;
 localparam TX_4_TRANSMIT_6  = 5'd23;
-localparam TX_5_ACK_1       = 5'd24;
-localparam TX_5_ACK_2       = 5'd25;
-localparam TX_5_ACK_3       = 5'd26;
+localparam TX_4_TRANSMIT_7  = 5'd24;
+localparam TX_4_TRANSMIT_8  = 5'd25;
+localparam TX_4_TRANSMIT_9  = 5'd26;
+localparam TX_5_ACK_1       = 5'd27;
+localparam TX_5_ACK_2       = 5'd28;
+localparam TX_5_ACK_3       = 5'd29;
 
 
 always @ (posedge clk, negedge rstn) begin
     if (~rstn) begin
-        state   <= IDLE;
+        state           <= IDLE;
+        mode            <= RX_MODE;
+        tx_control      <= TX_MANUAL;
+        m_hold          <= 0;
+        m_execute       <= 0;
+        m_din           <= 0;
+        s_in_dv         <= 1;
+        c_in_dv         <= 0;
+        c_en_s2p        <= 0;
+        tx_manual_reg   <= 1; // TX is normally high
+        baud_size       <= BAUD_SIZE;
+        count           <= 16'd0;
+        count_20        <= 16'd0;
+        baud_clk        <= 16'd0;
     end
     else begin
         case(state)
             IDLE        :   begin
                 mode    <=  RX_MODE;
-
+                tx_control      <= TX_MANUAL;
+                m_hold          <= 0;
+                m_execute       <= 0;
+                m_din           <= 0;
+                s_in_dv         <= 1;
+                c_in_dv         <= 0;
+                c_en_s2p        <= 0;
+                tx_manual_reg   <= 1; // TX is normally high
+                baud_size       <= BAUD_SIZE;
+                count           <= 16'd0;
+                count_20        <= 16'd0;
+                baud_clk        <= 16'd0;
+                
                 if      (~rx) begin
                     baud_size   <= 16'd1;
                     state       <= RX_1_COUNT;
@@ -244,7 +273,7 @@ always @ (posedge clk, negedge rstn) begin
 
             RX_3_RECEIVE_1: begin
                 if (~rx)    begin
-                    count           <= 16'd1;
+                    count           <= 16'd2;
                     state           <= RX_3_RECEIVE_2;
                 end
                 else
@@ -253,9 +282,7 @@ always @ (posedge clk, negedge rstn) begin
 
             RX_3_RECEIVE_2: begin
 
-                if (count == half_baud_size) begin
-                    //baud_clk <= 1;
-                          // start reading
+                if (count == baud_size) begin  // start reading
                     count    <= 16'd1;
                     state    <= RX_3_RECEIVE_3;
                 end
@@ -270,7 +297,7 @@ always @ (posedge clk, negedge rstn) begin
                 if (count == half_baud_size) begin
                     c_en_s2p <= 1;
                     baud_clk <= ~baud_clk;
-                    count <= 0;
+                    count <= 16'd1;
                 end
                 else
                     count <= count + 16'd1;
@@ -285,15 +312,15 @@ always @ (posedge clk, negedge rstn) begin
             end
 
             RX_3_RECEIVE_4: begin
-
-                baud_clk     <= 0;
+                
+                baud_clk     <= ~baud_clk;
                 m_din        <= c_p_wire;   // copy data
                 count        <= 16'd0;
                 state        <= RX_4_ACK_1;
             end
 
             RX_4_ACK_1  :   begin
-
+                baud_clk        <= ~baud_clk;
                 tx_control      <=  TX_MANUAL;
                 tx_manual_reg   <=  0;
                 count           <= count + 16'd1;
@@ -301,6 +328,7 @@ always @ (posedge clk, negedge rstn) begin
             end
 
             RX_4_ACK_2  :   begin
+                baud_clk <= ~baud_clk;
 
                 if (count == baud_size) begin
                     tx_manual_reg   <= 1;
@@ -334,6 +362,7 @@ always @ (posedge clk, negedge rstn) begin
                 if (m_dvalid) begin         // Master done writing
                     m_hold    <= 0;
                     baud_size <= BAUD_SIZE;
+                    baud_clk  <= 0;
                     state     <= IDLE;
                 end
                 else
@@ -346,13 +375,14 @@ always @ (posedge clk, negedge rstn) begin
                 c_p_reg     <= {AD_PREFIX, s_out_data};  // copy data
                 count       <= 16'd1;
                 tx_control  <= TX_MANUAL;
+                tx_manual_reg   <= 0;
                 state       <= TX_1_START;
             end
 
             TX_1_START  :   begin
                 if (count == baud_size) begin
-                    count           <= 0;
                     tx_manual_reg   <= 1;
+                    count           <= 0;
                     state           <= TX_2_ACK_1;
                 end
                 else begin
@@ -379,11 +409,13 @@ always @ (posedge clk, negedge rstn) begin
             TX_3_WASTE  :   begin
                 if (count == baud_size) begin
                     count           <= 0;
-                    state           <= TX_4_TRANSMIT_1;
                     c_en_s2p        <= 0;
                     mode            <= TX_MODE;
                     tx_control      <= TX_MANUAL;
                     baud_clk        <= 0;
+                    c_in_dv         <= 1;
+                    
+                    state           <= TX_4_TRANSMIT_1;
 
                 end
                 else begin
@@ -391,16 +423,11 @@ always @ (posedge clk, negedge rstn) begin
                     state         <= TX_3_WASTE;
                 end
             end
-
-            TX_4_TRANSMIT_1:  begin
-                if (c_in_dv)
-                    state   <=  TX_4_TRANSMIT_2;
-                else
-                    state   <=  TX_4_TRANSMIT_1;
-
+            TX_4_TRANSMIT_1:  begin                 // skip half
                 if (count == half_baud_size) begin
                     count         <= 0;
                     baud_clk      <= ~baud_clk;
+                    state         <= TX_4_TRANSMIT_2;
                 end
                 else begin
                     count         <= count + 16'd1;
@@ -416,18 +443,17 @@ always @ (posedge clk, negedge rstn) begin
                     count         <= count + 16'd1;
                 end
             end
-            TX_4_TRANSMIT_3:  begin                 // skip one
+            TX_4_TRANSMIT_3:  begin                 // skip half
                 if (count == half_baud_size) begin
                     count         <= 0;
                     baud_clk      <= ~baud_clk;
-                    tx_manual_reg <= 1;
                     state         <= TX_4_TRANSMIT_4;
                 end
                 else begin
                     count         <= count + 16'd1;
                 end
             end
-            TX_4_TRANSMIT_4:  begin                 
+            TX_4_TRANSMIT_4:  begin                 // skip half
                 if (count == half_baud_size) begin
                     count         <= 0;
                     baud_clk      <= ~baud_clk;
@@ -437,68 +463,93 @@ always @ (posedge clk, negedge rstn) begin
                     count         <= count + 16'd1;
                 end
             end
-            TX_4_TRANSMIT_5:  begin                 // start bit done
+            TX_4_TRANSMIT_5:  begin                 // skip half
                 if (count == half_baud_size) begin
                     count         <= 0;
                     baud_clk      <= ~baud_clk;
                     tx_manual_reg <= 0;
+                    state         <= TX_4_TRANSMIT_6;
+                end
+                else begin
+                    count         <= count + 16'd1;
+                end
+            end
+
+            TX_4_TRANSMIT_6:  begin                 // skip one
+                if (count == half_baud_size) begin
+                    count         <= 0;
+                    baud_clk      <= ~baud_clk;
+                    state         <= TX_4_TRANSMIT_7;
+                end
+                else begin
+                    count         <= count + 16'd1;
+                end
+            end
+            TX_4_TRANSMIT_7:  begin                 
+                if (count == half_baud_size) begin
+                    count         <= 0;
+                    count_20      <= 0;
+                    baud_clk      <= ~baud_clk;
+                    tx_manual_reg <= 1;
                     tx_control    <= TX_CONVERTER;
-                    state         <= TX_4_TRANSMIT_6;
+                    state         <= TX_4_TRANSMIT_8;
                 end
                 else begin
                     count         <= count + 16'd1;
                 end
-            end
-            TX_4_TRANSMIT_5:  begin                 // wait for dv to go high
-                if (c_out_dv)
-                    state         <= TX_4_TRANSMIT_6;
+            end                                     // start bit done
+            TX_4_TRANSMIT_8:  begin                 // wait for dv to go high
+                if (count_20 == 16'd20) begin
+                    count_20      <= 16'd0;
+                    state         <= TX_4_TRANSMIT_9;
+                end
                 else
-                    state         <= TX_4_TRANSMIT_5;
+                    state         <= TX_4_TRANSMIT_8;
 
                 if (count == half_baud_size) begin
                     count         <= 0;
+                    count_20      <= count_20 + 16'd1;
                     baud_clk      <= ~baud_clk;
                 end
                 else begin
                     count         <= count + 16'd1;
                 end
             end
-            TX_4_TRANSMIT_6:  begin                 // wait for dv to go low
-                if (~c_out_dv)  begin
-                    mode          <= RX_MODE;
-                    state         <= TX_5_ACK_1;
-                end
-                else
-                    state         <= TX_4_TRANSMIT_6;
-
-                if (count == half_baud_size) begin
-                    count         <= 0;
-                    baud_clk      <= ~baud_clk;
-                end
-                else begin
-                    count         <= count + 16'd1;
-                end
+            TX_4_TRANSMIT_9:  begin
+                c_rst_reg     <= 1;    
+                baud_clk      <= ~baud_clk;
+                mode          <= RX_MODE;
+                tx_control    <= TX_MANUAL;
+                c_in_dv       <= 0;
+                baud_clk      <= 0;
+                state         <= TX_5_ACK_1;
+                
             end
 
             TX_5_ACK_1  :   begin           // Ack starts
-                if (~rx)
+                c_rst_reg     <= 0;
+                baud_clk      <= ~baud_clk;
+                if (~rx) begin
+                    s_in_dv <= 0;
                     state <= TX_5_ACK_2;
+                end
                 else
                     state <= TX_5_ACK_1;
             end
 
             TX_5_ACK_2  :   begin           // Ack ends
+                baud_clk      <= ~baud_clk;
                 if (rx) begin
                     s_in_dv <= 1;
-                    state   <= TX_5_ACK_2;
+                    state   <= TX_5_ACK_3;
                 end
                 else
-                    state <= TX_5_ACK_1;
+                    state <= TX_5_ACK_2;
             end
 
             TX_5_ACK_3  :   begin           // Ack ends
-                s_in_dv <= 0;
-                state   <= IDLE;
+                baud_clk    <= 0;
+                state       <= IDLE;
             end
 
 
