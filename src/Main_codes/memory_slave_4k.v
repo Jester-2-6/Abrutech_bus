@@ -33,7 +33,7 @@ module memory_slave_4k #(
     reg module_dv   = 1'b0;
 
     reg [DATA_WIDTH - 1:0]      data_out_buff;
-    wire [ADDRESS_WIDTH -1:0]   addr_buff;
+    reg [ADDRESS_WIDTH -1:0]   addr_buff;
 
     slave #(
         .ADDRESS_WIDTH(ADDRESS_WIDTH),

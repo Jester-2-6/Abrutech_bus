@@ -58,8 +58,8 @@ localparam CLK_PERIOD   = 10; //10ns
 localparam EXAMPLE_DATA = 8'd203;
 localparam EXAMPLE_ADDR = 15'd27306;
 
-localparam MSTR2_ADDRS  = {3'd3,12'd0};
-localparam MSTR4_ADDRS  = {3'd3,12'd0};
+localparam MSTR2_ADDRS  = {3'd3,12'd5};
+localparam MSTR4_ADDRS  = {3'd3,12'd6};
 localparam MSTR5_ADDRS  = {3'd4,12'd1500};
 
 localparam MSTR2_DIN    = 8'd231;
