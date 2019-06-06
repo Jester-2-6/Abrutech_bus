@@ -26,13 +26,14 @@ module memory_slave_4k #(
 
     wire [DATA_WIDTH - 1:0]     data_in_parellel;
     wire [DATA_WIDTH - 1:0]     data_out_parellel;
-    wire [ADDRESS_WIDTH -1:0]   addr_out;
+    wire [ADDRESS_WIDTH -1:0]   addr_out_wire;
     wire                        write_en_internal;
     wire                        req_int_data;
 
     reg module_dv   = 1'b0;
 
     reg [DATA_WIDTH - 1:0]      data_out_buff;
+    wire [ADDRESS_WIDTH -1:0]   addr_buff;
 
     slave #(
         .ADDRESS_WIDTH(ADDRESS_WIDTH),
@@ -52,7 +53,7 @@ module memory_slave_4k #(
         .write_en_internal(write_en_internal),
         .req_int_data(req_int_data),
         .data_out_parellel(data_out_parellel),
-        .addr_buff(addr_out)
+        .addr_buff(addr_out_wire)
     );
 
     bi2bcd display(
@@ -63,7 +64,7 @@ module memory_slave_4k #(
     );
 
     ram_4k ram_inst(
-        .address(addr_out[ADDRESS_WIDTH-4:0]),
+        .address(addr_buff[ADDRESS_WIDTH-4:0]),
         .clock(clk),
         .data(data_out_parellel),
         .wren(write_en_internal),
@@ -77,10 +78,11 @@ module memory_slave_4k #(
 
         end else begin
             if (req_int_data) begin
-                data_out_buff   <= data_in_parellel;
+                addr_buff       <= addr_out_wire;
                 module_dv       <= 1'b1;
 
             end else if (write_en_internal) begin
+                data_out_buff   <= data_in_parellel;
                 module_dv       <= 1'b1;
             end else module_dv  <= 1'b0;
         end

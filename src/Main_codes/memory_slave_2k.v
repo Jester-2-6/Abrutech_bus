@@ -1,11 +1,11 @@
 /*
-Module name  : memory_slave.v
+Module name  : memory_slave_4k.v
 Author 	     : C.Wimalasuriya
 Date Modified: 01/06/2019
 Organization : ABruTECH
 Description  : Slave module with memory of the bus
 */
-module memory_slave_2k #(
+module memory_slave_4k #(
     parameter ADDRESS_WIDTH = 4'd15,
     parameter DATA_WIDTH    = 4'd8,
     parameter SELF_ID       = 3'd0
@@ -26,13 +26,14 @@ module memory_slave_2k #(
 
     wire [DATA_WIDTH - 1:0]     data_in_parellel;
     wire [DATA_WIDTH - 1:0]     data_out_parellel;
-    wire [ADDRESS_WIDTH -1:0]   addr_out;
+    wire [ADDRESS_WIDTH -1:0]   addr_out_wire;
     wire                        write_en_internal;
     wire                        req_int_data;
 
     reg module_dv   = 1'b0;
 
     reg [DATA_WIDTH - 1:0]      data_out_buff;
+    wire [ADDRESS_WIDTH -1:0]   addr_buff;
 
     slave #(
         .ADDRESS_WIDTH(ADDRESS_WIDTH),
@@ -52,7 +53,7 @@ module memory_slave_2k #(
         .write_en_internal(write_en_internal),
         .req_int_data(req_int_data),
         .data_out_parellel(data_out_parellel),
-        .addr_buff(addr_out)
+        .addr_buff(addr_out_wire)
     );
 
     bi2bcd display(
@@ -63,7 +64,7 @@ module memory_slave_2k #(
     );
 
     ram_2k ram_inst(
-        .address(addr_out[ADDRESS_WIDTH-4:0]),
+        .address(addr_buff[ADDRESS_WIDTH-4:0]),
         .clock(clk),
         .data(data_out_parellel),
         .wren(write_en_internal),
@@ -77,10 +78,11 @@ module memory_slave_2k #(
 
         end else begin
             if (req_int_data) begin
-                data_out_buff   <= data_in_parellel;
+                addr_buff       <= addr_out_wire;
                 module_dv       <= 1'b1;
 
             end else if (write_en_internal) begin
+                data_out_buff   <= data_in_parellel;
                 module_dv       <= 1'b1;
             end else module_dv  <= 1'b0;
         end
