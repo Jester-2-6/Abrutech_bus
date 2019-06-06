@@ -26,6 +26,7 @@ module bus_top_module(
     slave_busy,
     current_m_bsy,
     mux_switch,
+    clk_mux,
     master2_hold,
     master4_hold,
     master5_hold,
@@ -67,6 +68,7 @@ input rstn;          // Key0
 input rx0;
 input rx1;
 input [2:0] mux_switch; //SW17 SW16 SW15
+input clk_mux;
 input master2_hold;  // SW0
 input master4_hold;  // SW2
 input master5_hold;  // SW4
@@ -102,6 +104,7 @@ wire (strong0,weak1)    b_BUS;           // Pullup
 wire (weak0,strong1)    b_RW ;           // Pulldown
 wire (weak0,strong1)    b_bus_utilizing; // Pulldown
 wire                    _10MHz;
+wire                    _1Hz;
 wire [20:0]             mux_out;
 
 //Bus controller
@@ -391,12 +394,6 @@ slave_5
 // Slave100 -4
 
 
-///////////////////////////////////////////////////
-
-
-///////////////////////////////////////////
-
-
 ///////////////////////// Debouncers /////////////////////////////
 debouncer debounce0(
     .button_in(master2_hold),
@@ -507,14 +504,14 @@ pulse pulse2(
 clock_divider _10MHz_to_1Hz(
 			.inclk(_10MHz),
 			.ena(1),
-			.clk(clk));
+			.clk(_1Hz));
 			
 //Convert 50MHz clock to 10MHz clock	
 			
 pll _50MHz_to_10MHz(
 	.inclk0(in_clk),
 .c0(_10MHz));
-
+clk
 
 // SSDisplays
 bi2bcd ssd76(  // Display Current master
@@ -553,16 +550,25 @@ bi2bcd master_data5(
     .dout0(dout0_m5)
     );
 
-// Routing mux
+///////////////////////// Muxes ///////////////////
 mux_21_8 multiplexer(
-    {dout2_s0,dout1_s0,dout0_s0}
-    {dout2_s3,dout1_s3,dout0_s3}
-    {dout2_s4,dout1_s4,dout0_s4}
-    {dout2_s5,dout1_s5,dout0_s5}
-    {dout2_m2,dout1_m2,dout0_m2}
-    {dout2_m4,dout1_m4,dout0_m4}
-    {dout2_m5,dout1_m5,dout0_m5}
-    mux_out
+    .data0x({dout2_s0,dout1_s0,dout0_s0}), // Slave 0 output 
+    .data1x({dout2_s3,dout1_s3,dout0_s3}), // Slave 3 output
+    .data2x({dout2_s4,dout1_s4,dout0_s4}), // Slave 4 output
+    .data3x({dout2_s5,dout1_s5,dout0_s5}), // Slave 5 output
+    .data4x({dout2_m2,dout1_m2,dout0_m2}), // Master 2 data 
+    .data5x({dout2_m4,dout1_m4,dout0_m4}), // Master 4 data
+    .data6x({dout2_m5,dout1_m5,dout0_m5}), // Master 5 data
+    .data7x({dout2_s0,dout1_s0,dout0_s0}), // Slave 0 data
+    .sel(mux_switch),
+    .result(mux_out)
+);
+
+mux_1_1 clk_multiplexer(
+    .data0(_10MHz),
+    .data1(_1Hz),
+    .sel(clk_mux),
+    .result(clk)
 );
 
 
