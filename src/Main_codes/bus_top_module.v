@@ -35,9 +35,16 @@ module bus_top_module(
     master5_ex,
     master2_RW,
     master4_RW,
+    test,
     master5_RW
 );
-
+assign test =b_request2;
+bi2bcd test_2(  // Display Current master's slave
+    .din({3'b0,st}), // find a way to find its slave
+    .dout2(),
+    .dout1(),
+    .dout0(hex3)
+    );
 ///////////////////////////////// Parameters ///////////////////////////////
 localparam DATA_WIDTH   = 8;
 localparam ADDRS_WIDTH  = 15;
@@ -79,7 +86,7 @@ input master2_RW;    // SW1
 input master4_RW;    // SW3
 input master5_RW;    // SW5
 
-
+output test;
 output tx0;
 output tx1;
 output [6:0] hex0;
@@ -106,6 +113,7 @@ wire (weak0,strong1)    b_bus_utilizing; // Pulldown
 wire                    _10MHz;
 wire                    _1Hz;
 wire [20:0]             mux_out;
+wire                    current_m_bsy_mux_out;
 
 //Bus controller
 wire                  [11:0] m_reqs;
@@ -194,7 +202,7 @@ bus_controller Bus_Controller(
     .m_grants(m_grants),
     .slaves(slaves),
     .bus_util(b_bus_utilizing),
-    .state(),//.state(state),
+    .state(st),//.state(state),
     .mid_current(mid_current)
 );
 
@@ -224,9 +232,10 @@ master_2(
     .b_BUS(b_BUS),
     .b_request(b_request2),
     .b_RW(b_RW),
+    .state(st2) //remove
     .b_bus_utilizing(b_bus_utilizing)
 );
-
+    wire [3:0] st2; //remove
 // Master4
 master #(
     .DATA_WIDTH(DATA_WIDTH),
@@ -511,7 +520,7 @@ clock_divider _10MHz_to_1Hz(
 pll _50MHz_to_10MHz(
 	.inclk0(in_clk),
 .c0(_10MHz));
-clk
+
 
 // SSDisplays
 bi2bcd ssd76(  // Display Current master
@@ -571,14 +580,35 @@ mux_1_1 clk_multiplexer(
     .result(clk)
 );
 
+mux_1_16 current_master_bsy_mux(
+    .data0(1'b0),    
+    .data1(1'b0),
+    .data2(m_master_bsy2),
+    .data3(1'b0),
+    .data4(m_master_bsy4),
+    .data5(m_master_bsy5),
+    .data6(1'b0),
+    .data7(1'b0),
+    .data8(1'b0),
+    .data9(1'b0),
+    .data10(1'b0),
+    .data11(1'b0),
+    .data12(1'b0),
+    .data13(1'b0),
+    .data14(1'b0),
+    .data15(1'b0),
+    .sel(mid_current),
+    .result(current_m_bsy_mux_out)
+);
+
 
 
 ///////////////////////////////////////// Assignments //////////////////////////////////
 assign requests         = m_reqs;
 assign utilization      = b_bus_utilizing;
 assign slave_busy       = slaves;
-assign current_m_bsy    = {0,0,0,0,0,0,m_master_bsy5,m_master_bsy4,0,m_master_bsy2,0,0}[mid_current];
-assign m_reqs           = {0,0,0,0,0,0,b_request5,b_request4,0,b_request2,0,b_request0};
+assign current_m_bsy    = current_m_bsy_mux_out;// {0,0,0,0,0,0,m_master_bsy5,m_master_bsy4,0,m_master_bsy2,0,0}[mid_current];
+assign m_reqs           = {1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,b_request5,b_request4,1'b0,b_request2,1'b0,b_request0};
 assign {hex2,hex1,hex0} = mux_out;//{dout2_s0,dout1_s0,dout0_s0};//?{dout2,dout1,dout0}:{,,};
 // reg [20:0]
 // always@(mux_switch)
