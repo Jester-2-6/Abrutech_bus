@@ -81,12 +81,12 @@ wire [1:0] p_current;
 assign p_current = mid_current[3:2];
 
 // slaves inout is input when dir = 1 and output (reg) when dir = 0
-assign slaves[0] = slaves_inout_dir[0] ? 1'bz : slaves_inout_reg[0];
-assign slaves[1] = slaves_inout_dir[1] ? 1'bz : slaves_inout_reg[1];
-assign slaves[2] = slaves_inout_dir[2] ? 1'bz : slaves_inout_reg[2];
-assign slaves[3] = slaves_inout_dir[3] ? 1'bz : slaves_inout_reg[3];
-assign slaves[4] = slaves_inout_dir[4] ? 1'bz : slaves_inout_reg[4];
-assign slaves[5] = slaves_inout_dir[5] ? 1'bz : slaves_inout_reg[5];
+assign slaves[0] = slaves_inout_dir[0] ? 1'bZ : slaves_inout_reg[0];
+assign slaves[1] = slaves_inout_dir[1] ? 1'bZ : slaves_inout_reg[1];
+assign slaves[2] = slaves_inout_dir[2] ? 1'bZ : slaves_inout_reg[2];
+assign slaves[3] = slaves_inout_dir[3] ? 1'bZ : slaves_inout_reg[3];
+assign slaves[4] = slaves_inout_dir[4] ? 1'bZ : slaves_inout_reg[4];
+assign slaves[5] = slaves_inout_dir[5] ? 1'bZ : slaves_inout_reg[5];
 
 
 // Filter requests by ~blocked bit and take
