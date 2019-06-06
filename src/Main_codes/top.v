@@ -176,7 +176,7 @@ slave_0
     .slave_busy(slv_bsy)
 );*/
 
-memory_slave #(
+memory_slave_2k #(
     .ADDRESS_WIDTH(ADDRS_WIDTH),
     .DATA_WIDTH(DATA_WIDTH),
     .SELF_ID(3'b101)
