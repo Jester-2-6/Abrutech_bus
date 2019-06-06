@@ -568,14 +568,14 @@ bi2bcd master_data2(
 //-//
 ///////////////////////// Muxes ///////////////////
 mux_21_8 multiplexer(
-    .data0x({dout2_s0,dout1_s0,dout0_s0}), // Slave 0 output 
-    .data1x({dout2_s3,dout1_s3,dout0_s3}), // Slave 3 output
-    .data2x({dout2_s4,dout1_s4,dout0_s4}), // Slave 4 output
-    .data3x({dout2_s5,dout1_s5,dout0_s5}), // Slave 5 output
-    .data4x({dout2_m2,dout1_m2,dout0_m2}), // Master 2 data 
-    .data5x({dout2_m4,dout1_m4,dout0_m4}), // Master 4 data
-    .data6x({dout2_m5,dout1_m5,dout0_m5}), // Master 5 data
-    .data7x({dout2_s0,dout1_s0,dout0_s0}), // Slave 0 data
+    .data0x({dout2_s0,dout1_s0,dout0_s0}), // Slave 0 output 000
+    .data1x({dout2_s3,dout1_s3,dout0_s3}), // Slave 3 output 001
+    .data2x({dout2_s4,dout1_s4,dout0_s4}), // Slave 4 output 010
+    .data3x({dout2_s5,dout1_s5,dout0_s5}), // Slave 5 output 011
+    .data4x({dout2_m2,dout1_m2,dout0_m2}), // Master 2 data  100
+    .data5x({dout2_m4,dout1_m4,dout0_m4}), // Master 4 data  101
+    .data6x({dout2_m5,dout1_m5,dout0_m5}), // Master 5 data  110
+    .data7x({dout2_s0,dout1_s0,dout0_s0}), // Slave 0 data   111
     .sel(mux_switch),
     .result(mux_out)
 );
