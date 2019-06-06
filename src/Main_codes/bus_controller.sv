@@ -49,7 +49,8 @@ parameter FOUND         = 4'd7;
 parameter GRANT_1       = 4'd8;
 parameter GRANT_2       = 4'd9;
 parameter ACK_SLAVE_1   = 4'd10;
-parameter ACK_SLAVE_2   = 4'd14;
+parameter ACK_SLAVE_2   = 4'd11;
+parameter WAIT          = 4'd12;
 
 // Regs
 output reg [3:0]   state       = IDLE;
@@ -68,6 +69,8 @@ reg [2:0]   sid_busy    = SID_NONE;
 reg [2:0]   sid_done    = SID_NONE;
 reg slave_got_busy      = 0;
 reg switch_to_slave     = 0;
+
+reg [2:0]   wait_counter= 3'd0;
 
 // Wires
 wire any_p1_req;
@@ -256,7 +259,7 @@ always @ (posedge clk, negedge rstn) begin
             end
 
             GRANT_2: begin
-                if      (bus_util)         state <= GRANT_2;  // wait until master picks up the bus
+                if      (bus_util)          state <= GRANT_2;  // wait until master picks up the bus
                 else if (switch_to_slave)   state <= ACK_SLAVE_1;
                 else                        state <= IDLE;
             end
@@ -277,8 +280,18 @@ always @ (posedge clk, negedge rstn) begin
                 sid_done                    <= SID_NONE;
                 switch_to_slave             <= 0;
                 mid_blocked[mid_current]    <= 0;
+                wait_counter                <= 3'd1;
 
-                state <= IDLE;
+                state <= WAIT;
+            end
+
+            WAIT   : begin
+                if (wait_counter == 3'd0)
+                    state                   <= IDLE;
+                else begin
+                    wait_counter            <= wait_counter + 3'd1;
+                    state                   <= WAIT;
+                end
             end
 
         endcase
