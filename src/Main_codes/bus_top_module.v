@@ -9,24 +9,26 @@ Description  : Top module containig the arbiter,masters and slaves
 module bus_top_module(
     rstn,
     in_clk,
-    tx0,
-    rx0,
-    tx1,
-    rx1,
+    tx0,  //handle
+    rx0,  //handle
+    tx1,  //handle
+    rx1,  //handle
     hex0,
     hex1,
     hex2,
     hex3,
-    hex4,
-    hex6,
+    //hex4,
+    //hex5,
+    //hex6,
     hex7,
     requests,
     utilization,
     slave_busy,
-    mux_switch,
-    master2_req,
-    master4_req,
-    master5_req,
+    current_m_bsy,
+    //mux_switch,
+    master2_hold,
+    master4_hold,
+    master5_hold,
     master2_ex,
     master4_ex,
     master5_ex,
@@ -60,7 +62,7 @@ input in_clk;
 input rstn;
 input rx0;
 input rx1;
-input mux_switch;
+//input mux_switch;
 input master2_hold;
 input master4_hold;
 input master5_hold;
@@ -78,10 +80,12 @@ output [6:0] hex0;
 output [6:0] hex1;
 output [6:0] hex2;
 output [6:0] hex3;
-output [6:0] hex4;
-output [6:0] hex6;
+// output [6:0] hex4;
+// output [6:0] hex5;
+//output [6:0] hex6;
 output [6:0] hex7;
 output [11:0] requests;
+output current_m_bsy;
 output utilization;
 output [5:0] slave_busy;
 
@@ -93,6 +97,7 @@ wire                    clk;
 wire (strong0,weak1)    b_BUS;           // Pullup
 wire (weak0,strong1)    b_RW ;           // Pulldown
 wire (weak0,strong1)    b_bus_utilizing; // Pulldown
+wire                    _10MHz;
 
 //Bus controller
 wire                  [11:0] m_reqs;
@@ -349,16 +354,16 @@ debouncer debounce8(
     .clk(in_clk),
     .button_out(deb_master5_RW));
 
-debouncer debounce7(
-    .button_in(),
-    .clk(in_clk),
-    .button_out(deb_));
+// debouncer debounce7(
+//     .button_in(),
+//     .clk(in_clk),
+//     .button_out(deb_));
 
 
-debouncer debounce7(
-    .button_in(),
-    .clk(in_clk),
-    .button_out(deb_));
+// debouncer debounce7(
+//     .button_in(),
+//     .clk(in_clk),
+//     .button_out(deb_));
 
 
 
@@ -386,12 +391,12 @@ pulse pulse2(
     .rstn(deb_rstn)
 );
 
-pulse pulse3(
-    .din(deb_),
-    .dout(pul_),
-    .clk(clk),
-    .rstn(deb_rstn)
-);
+// pulse pulse3(
+//     .din(deb_),
+//     .dout(pul_),
+//     .clk(clk),
+//     .rstn(deb_rstn)
+// );
 
 
 
@@ -422,11 +427,12 @@ pll _50MHz_to_10MHz(
 
 
 // Assignments
-assign hex7 = {4'b0,mid_current};
-assign requests = m_reqs;
-assign utilization = b_bus_utilizing;
-assign slave_busy = slaves;
-assign m_reqs   = {0,0,0,0,0,0,b_request5,b_request4,0,b_request2,0,0};
+assign hex7             = {4'b0,mid_current};
+assign requests         = m_reqs;
+assign utilization      = b_bus_utilizing;
+assign slave_busy       = slaves;
+assign current_m_bsy    = {0,0,0,0,0,0,m_master_bsy5,m_master_bsy4,0,m_master_bsy2,0,0}[mid_current];
+assign m_reqs           = {0,0,0,0,0,0,b_request5,b_request4,0,b_request2,0,0};
 assign {hex2,hex1,hex0} = {dout2,dout1,dout0};//?{dout2,dout1,dout0}:{,,};
 
 

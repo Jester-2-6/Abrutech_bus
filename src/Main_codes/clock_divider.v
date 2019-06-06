@@ -1,12 +1,12 @@
 module clock_divider(inclk,ena,clk);
 
-	parameter maxcount=23'd5000000;// input 10MHz clock and output 1Hz clk
+	parameter maxcount=24'd10000000;// input 10MHz clock and output 1Hz clk
 	
 	input inclk;
 	input ena;
 	output reg clk=1;
 	
-	reg [22:0] count=23'd0;
+	reg [23:0] count=24'd0;
 	
 	always @ (posedge inclk )
 		begin
@@ -15,7 +15,7 @@ module clock_divider(inclk,ena,clk);
 				if (count==maxcount)
 					begin 
 					clk=~clk;
-					count=23'd0;
+					count=24'd0;
 					end
 				else 
 					begin
