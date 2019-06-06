@@ -42,6 +42,7 @@ module slave #(
     localparam TX_DATA_TO_MS       = 4'd12;
     localparam CLEANUP             = 4'd13;
     localparam WAIT_TIMEOUT        = 4'd14;
+    localparam WAIT_1_CLK          = 4'd15;
 
     localparam DATA_WIDTH_LOG = $clog2(DATA_WIDTH);
 
@@ -225,12 +226,10 @@ module slave #(
                 end
 
                 TX_DATA_ACK: begin
-                    if (arbiter_cmd_in) begin
+                    if (~ack_counter) begin
                         serial_buff     <= 1'b0;   
                         ack_counter     <= 1'b1; 
-                    end 
-
-                    if (ack_counter) begin
+                    end else if (ack_counter) begin
                         state           <= IDLE;
                         serial_buff     <= 1'b1;   
                         ack_counter     <= 1'b0; 
