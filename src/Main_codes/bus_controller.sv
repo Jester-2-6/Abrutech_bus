@@ -155,7 +155,7 @@ always @ (posedge clk, negedge rstn) begin
                 else if (any_p3_req)        state <= SEARCH_P3;
                 else                        state <= IDLE;
 
-                if (~bus_util) begin  // Master dropped
+                if (bus_util) begin  // Master dropped
                     mid_grant   <= MID_NONE;
                     mid_current <= MID_NONE;
                 end
@@ -173,10 +173,10 @@ always @ (posedge clk, negedge rstn) begin
             end
 
             BUSY_SLAVE_2: begin
-                if (bus_util)   state   <= BUSY_SLAVE_2;
+                if (~bus_util)   state   <= BUSY_SLAVE_2;
                 else begin
-                            mid_current <= MID_NONE;
-                            state       <= IDLE;
+                    mid_current <= MID_NONE;
+                    state       <= IDLE;
                 end
             end
 
@@ -243,7 +243,7 @@ always @ (posedge clk, negedge rstn) begin
             FOUND: begin
                 mid_grant <= MID_NONE;
                 
-                if (bus_util) state <= FOUND;   // Wait until bus is free
+                if (~bus_util) state <= FOUND;   // Wait until bus is free
                 else          state <= GRANT_1;
             end
 
@@ -256,7 +256,7 @@ always @ (posedge clk, negedge rstn) begin
             end
 
             GRANT_2: begin
-                if      (~bus_util)         state <= GRANT_2;  // wait until master picks up the bus
+                if      (bus_util)         state <= GRANT_2;  // wait until master picks up the bus
                 else if (switch_to_slave)   state <= ACK_SLAVE_1;
                 else                        state <= IDLE;
             end
