@@ -59,8 +59,6 @@ reg [3:0]   mid_search  = MID_NONE;
 reg [3:0]   mid_grant   = MID_NONE;// 1111 => None granted
 reg [11:0]  mid_blocked = 12'b000000000000;
 
-reg [5:0] slaves_inout_reg    = 6'b000000; // Pulled down
-reg [5:0] slaves_inout_dir    = 6'b111111; // All inputs
 
 reg [1:0]   slaves_state[5:0] = '{SLAVE_FREE, SLAVE_FREE, SLAVE_FREE, 
                                   SLAVE_FREE, SLAVE_FREE, SLAVE_FREE};
@@ -82,21 +80,6 @@ wire [1:0] p_current;
 // Assignments
 
 assign p_current = mid_current[3:2];
-
-// // slaves inout is input when dir = 1 and output (reg) when dir = 0
-// // assign slaves[0] = slaves_inout_dir[0] ? 1'bZ : slaves_inout_reg[0];
-// // assign slaves[1] = slaves_inout_dir[1] ? 1'bZ : slaves_inout_reg[1];
-// // assign slaves[2] = slaves_inout_dir[2] ? 1'bZ : slaves_inout_reg[2];
-// // assign slaves[3] = slaves_inout_dir[3] ? 1'bZ : slaves_inout_reg[3];
-// // assign slaves[4] = slaves_inout_dir[4] ? 1'bZ : slaves_inout_reg[4];
-// // assign slaves[5] = slaves_inout_dir[5] ? 1'bZ : slaves_inout_reg[5];
-
-// assign slave_0 = slaves_inout_dir[0] ? 1'bZ : slaves_inout_reg[0];
-// assign slave_1 = slaves_inout_dir[1] ? 1'bZ : slaves_inout_reg[1];
-// assign slave_2 = slaves_inout_dir[2] ? 1'bZ : slaves_inout_reg[2];
-// assign slave_3 = slaves_inout_dir[3] ? 1'bZ : slaves_inout_reg[3];
-// assign slave_4 = slaves_inout_dir[4] ? 1'bZ : slaves_inout_reg[4];
-// assign slave_5 = slaves_inout_dir[5] ? 1'bZ : slaves_inout_reg[5];
 
 
 // Filter requests by ~blocked bit and take
@@ -142,10 +125,9 @@ always @ (posedge clk, negedge rstn) begin
         state                   <= IDLE;
         mid_current             <= MID_NONE;
         mid_search              <= MID_NONE;
+        slaves_out              <= 6'd0;
         mid_grant               <= MID_NONE;// 1111 => None granted
         mid_blocked             <= 12'b000000000000;
-        slaves_inout_reg        <= 6'b000000; // Pulled down
-        slaves_inout_dir        <= 6'b111111; // All inputs
         slaves_state[5:0]       <= '{SLAVE_FREE, SLAVE_FREE, SLAVE_FREE,
                                     SLAVE_FREE, SLAVE_FREE, SLAVE_FREE};
         slaves_mid  [5:0]       <= '{MID_NONE, MID_NONE, MID_NONE,
@@ -316,44 +298,6 @@ always @ (posedge clk, negedge rstn) begin
                 slaves_state[i]     <= SLAVE_DONE;
             end
         end
-
-        // if ((slaves_state   [0] == SLAVE_FREE) & (slave_0 == 1) & slaves_inout_dir[0]==1) begin
-        //         slaves_state[0] <= SLAVE_BUSY; 
-        //         slave_got_busy  <= 1;
-        //         sid_busy        <= 0;
-        // end
-        // if ((slaves_state   [1] == SLAVE_FREE) & (slave_1 == 1) & slaves_inout_dir[1]==1) begin
-        //         slaves_state[1] <= SLAVE_BUSY; 
-        //         slave_got_busy  <= 1;
-        //         sid_busy        <= 1;
-        // end
-        // if ((slaves_state   [2] == SLAVE_FREE) & (slave_2 == 1) & slaves_inout_dir[2]==1) begin
-        //         slaves_state[2] <= SLAVE_BUSY; 
-        //         slave_got_busy  <= 1;
-        //         sid_busy        <= 2;
-        // end
-        // if ((slaves_state   [3] == SLAVE_FREE) & (slave_3 == 1) & slaves_inout_dir[3]==1) begin
-        //         slaves_state[3] <= SLAVE_BUSY; 
-        //         slave_got_busy  <= 1;
-        //         sid_busy        <= 3;
-        // end
-        // if ((slaves_state   [4] == SLAVE_FREE) & (slave_4 == 1) & slaves_inout_dir[4]==1) begin
-        //         slaves_state[4] <= SLAVE_BUSY; 
-        //         slave_got_busy  <= 1;
-        //         sid_busy        <= 4;
-        // end
-        // if ((slaves_state   [5] == SLAVE_FREE) & (slave_5 == 1) & slaves_inout_dir[5]==1) begin
-        //         slaves_state[5] <= SLAVE_BUSY; 
-        //         slave_got_busy  <= 1;
-        //         sid_busy        <= 5;
-        // end
-
-        // if ((slaves_state[0] == SLAVE_BUSY) & (slave_0 == 0) & slaves_inout_dir[0]==1)  slaves_state[0] <= SLAVE_DONE;
-        // if ((slaves_state[1] == SLAVE_BUSY) & (slave_1 == 0) & slaves_inout_dir[1]==1)  slaves_state[1] <= SLAVE_DONE;
-        // if ((slaves_state[2] == SLAVE_BUSY) & (slave_2 == 0) & slaves_inout_dir[2]==1)  slaves_state[2] <= SLAVE_DONE;
-        // if ((slaves_state[3] == SLAVE_BUSY) & (slave_3 == 0) & slaves_inout_dir[3]==1)  slaves_state[3] <= SLAVE_DONE;
-        // if ((slaves_state[4] == SLAVE_BUSY) & (slave_4 == 0) & slaves_inout_dir[4]==1)  slaves_state[4] <= SLAVE_DONE;
-        // if ((slaves_state[5] == SLAVE_BUSY) & (slave_5 == 0) & slaves_inout_dir[5]==1)  slaves_state[5] <= SLAVE_DONE;
 
     end
 
