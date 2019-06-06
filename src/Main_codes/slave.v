@@ -180,13 +180,13 @@ module slave #(
                             ack_counter  <= 1'b0;
 
                             if (rd_wrt) begin
-                                state       <= RX_DATA_FROM_MS;
-                                ack_counter <= 1'b1;
+                                state               <= RX_DATA_FROM_MS;
+                                ack_counter         <= 1'b1;
                             end else begin
                                 state               <= BUSY_RD_FROM_MEM;
                                 data_dir_inv_s2p    <= 1'b1;
                                 req_int_data        <= 1'b1;
-                                slave_busy_reg  <= 1'b1;
+                                slave_busy_reg      <= 1'b1;
                             end
                         end
                     endcase
@@ -227,7 +227,7 @@ module slave #(
                         serial_buff     <= 1'b0;   
                         ack_counter     <= 1'b1; 
                     end 
-                    
+
                     if (ack_counter) begin
                         state           <= IDLE;
                         serial_buff     <= 1'b1;   
