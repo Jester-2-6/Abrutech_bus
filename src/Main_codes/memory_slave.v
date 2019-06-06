@@ -6,33 +6,37 @@ Organization : ABruTECH
 Description  : Slave module with memory of the bus
 */
 module memory_slave #(
-    parameter MEM_OFFSET = 0,
-    parameter MEM_SIZE = 2048,
-    parameter ADDRESS_WIDTH = 12
+    parameter ADDRESS_WIDTH = 4'd15,
+    parameter DATA_WIDTH    = 4'd8,
+    parameter SELF_ID       = 3'd0
 )(
-    input clk, rstn,
+    input clk, 
+    input rstn,
+    input rd_wrt,
+    input bus_util,
 
     output wire [6:0] disp_out2, 
     output wire [6:0] disp_out1, 
     output wire [6:0] disp_out0,        
 
-    inout data_bus_serial, slave_busy
+    inout data_bus_serial, 
+    inout slave_busy
 );
 
-    localparam IDLE     = 1'd0;
-    localparam MEM_WRT  = 1'd1;
-
-    wire [7:0]                  data_in_parellel;
-    wire [7:0]                  data_out_parellel;
+    wire [DATA_WIDTH - 1:0]     data_in_parellel;
+    wire [DATA_WIDTH - 1:0]     data_out_parellel;
     wire [ADDRESS_WIDTH -1:0]   addr_out;
-    wire                        write_en_int;
+    wire                        write_en_internal;
+    wire                        req_int_data;
 
-    reg state = IDLE;
     reg module_dv   = 1'b0;
+
+    reg [DATA_WIDTH - 1:0]      data_out_buff;
 
     slave #(
         .ADDRESS_WIDTH(ADDRESS_WIDTH),
-        .DATA_WIDTH(8)
+        .DATA_WIDTH(DATA_WIDTH),
+        .SELF_ID(SELF_ID)
     )Slave_inst(
         .clk(clk),
         .rstn(rstn),
@@ -40,10 +44,11 @@ module memory_slave #(
         .bus_util(bus_util),
         .module_dv(module_dv),
         .data_bus_serial(data_bus_serial),
-        .slave_busy(busy_wire),
-        .data_in_parellel(data_in_parellel),
+        .slave_busy(slave_busy),
+        .data_in_parellel(data_out_buff),
 
         .write_en_internal(write_en_internal),
+        .req_int_data(req_int_data),
         .data_out_parellel(data_out_parellel),
         .addr_buff(addr_out)
     );
@@ -56,7 +61,7 @@ module memory_slave #(
     );
 
     ram_2k ram_inst(
-        .address(addr_out),
+        .address(addr_out[ADDRESS_WIDTH-4:0]),
         .clock(clk),
         .data(data_out_parellel),
         .wren(write_en_internal),
@@ -65,116 +70,16 @@ module memory_slave #(
 
     always @(posedge clk, negedge rstn) begin
         if (~rstn) begin
-            state <= IDLE;
-            module_dv <= 1'b0;
+            module_dv       <= 1'b0;
+            data_out_buff   <= {DATA_WIDTH{1'b0}};
+
         end else begin
-            case (state)
-                IDLE: begin
-                    module_dv <= 1'b0;
-                    if (write_en_internal) state <= MEM_WRT;
-                end
+            if (req_int_data) begin
+                data_out_buff   <= data_in_parellel;
+                module_dv       <= 1'b1;
 
-                MEM_WRT: begin
-                    state       <= IDLE;
-                    module_dv   <= 1'b1;
-                end
-            endcase
+            end else module_dv  <= 1'b0;
         end
-
     end
 
 endmodule
-
-/*force -freeze sim:/memory_slave/Slave_inst/clk 1 0, 0 {50 ps} -r 100
-force -freeze sim:/memory_slave/Slave_inst/rstn 0 0
-force -freeze sim:/memory_slave/Slave_inst/rd_wrt 1 0
-run
-force -freeze sim:/memory_slave/Slave_inst/rstn St1 0
-run
-force -freeze sim:/memory_slave/data_bus_serial 0 0
-run
-run
-run
-force -freeze sim:/memory_slave/data_bus_serial St1 0
-run
-run
-force -freeze sim:/memory_slave/data_bus_serial St0 0
-run
-run
-force -freeze sim:/memory_slave/data_bus_serial St1 0
-run
-force -freeze sim:/memory_slave/data_bus_serial St0 0
-run
-force -freeze sim:/memory_slave/data_bus_serial St1 0
-run
-force -freeze sim:/memory_slave/data_bus_serial St0 0
-run
-force -freeze sim:/memory_slave/data_bus_serial St1 0
-run
-force -freeze sim:/memory_slave/data_bus_serial St0 0
-run
-run
-force -freeze sim:/memory_slave/data_bus_serial St1 0
-run
-run
-noforce sim:/memory_slave/data_bus_serial
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-force -freeze sim:/memory_slave/data_bus_serial St1 0
-run
-force -freeze sim:/memory_slave/data_bus_serial St0 0
-run
-force -freeze sim:/memory_slave/data_bus_serial St1 0
-run
-force -freeze sim:/memory_slave/data_bus_serial St0 0
-run
-force -freeze sim:/memory_slave/data_bus_serial St1 0
-run
-force -freeze sim:/memory_slave/data_bus_serial St0 0
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-noforce sim:/memory_slave/data_bus_serial
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-run
-*/

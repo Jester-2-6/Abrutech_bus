@@ -153,7 +153,7 @@ master_0(
 );
 
 // Slave instantiation
-slave #(
+/*slave #(
     .ADDRESS_WIDTH(ADDRS_WIDTH),
     .DATA_WIDTH(DATA_WIDTH),
     .SELF_ID(3'b101)
@@ -174,14 +174,35 @@ slave_0
 
     .data_bus_serial(b_BUS), 
     .slave_busy(slv_bsy)
+);*/
+
+memory_slave #(
+    .ADDRESS_WIDTH(ADDRS_WIDTH),
+    .DATA_WIDTH(DATA_WIDTH),
+    .SELF_ID(3'b101)
+)
+slave_0
+(
+    .clk(clk), 
+    .rstn(rstn), 
+    .rd_wrt(b_RW), 
+    .bus_util(b_bus_utilizing), 
+
+    .disp_out2(ss2),
+    .disp_out1(ss1),
+    .disp_out0(ss0),
+
+    .data_bus_serial(b_BUS), 
+    .slave_busy(slv_bsy)
 );
 
+
 // Display
-bi2bcd display(
+/*bi2bcd display(
     .din(sm_data_internal),
     .dout2(ss2),
     .dout1(ss1),
     .dout0(ss0)
-    );
+    );*/
 
 endmodule
