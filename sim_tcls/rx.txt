@@ -1,0 +1,26 @@
+vlog -work work U:/aba/Desktop_Win/Abrutech_bus/src/Main_codes/ext_interface.sv
+restart
+force -freeze sim:/ext_interface/clk 1 0, 0 {5 ps} -r 10
+run 100
+force -freeze sim:/ext_interface/rx 0 0
+run 80
+force -freeze sim:/ext_interface/rx 1 0
+run 200
+force -freeze sim:/ext_interface/rx 0 0
+run 240
+force -freeze sim:/ext_interface/rx 1 0
+run 640
+run 400
+force -freeze sim:/ext_interface/b_grant 1 0
+run 100
+
+
+
+
+#TX
+force -freeze sim:/ext_interface/s_out_dv 1 0
+run 100
+force -freeze sim:/ext_interface/rx 0 0
+run 80
+force -freeze sim:/ext_interface/rx 1 0
+run 300
