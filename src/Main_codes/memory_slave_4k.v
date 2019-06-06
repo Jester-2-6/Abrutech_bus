@@ -80,6 +80,8 @@ module memory_slave_4k #(
                 data_out_buff   <= data_in_parellel;
                 module_dv       <= 1'b1;
 
+            end else if (write_en_internal) begin
+                module_dv       <= 1'b1;
             end else module_dv  <= 1'b0;
         end
     end

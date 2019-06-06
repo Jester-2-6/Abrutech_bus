@@ -143,7 +143,7 @@ module slave #(
                 end
 
                 WAIT_FOR_PEER: begin
-                    if (~bus_util) state <= IDLE;
+                    if (bus_util) state <= IDLE;
                 end
 
                 ADDR_READ: begin
