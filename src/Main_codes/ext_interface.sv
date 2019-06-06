@@ -23,21 +23,21 @@ module ext_interface #(
 
     b_grant,
     b_request,
-    b_RW,
+    b_RW
 );
-parameter   PACKET_WIDTH= 10;
-parameter   DATA_WIDTH  = 8;
-parameter   ADDRS_WIDTH = 15;
-parameter   PORT_WIDTH  = 10;
-parameter   BIT_LENGTH  = 4;
-parameter   TIMEOUT_LEN = 6;
+localparam   PACKET_WIDTH= 10;
+localparam   DATA_WIDTH  = 8;
+localparam   ADDRS_WIDTH = 15;
+localparam   PORT_WIDTH  = 10;
+localparam   BIT_LENGTH  = 4;
+localparam   TIMEOUT_LEN = 6;
 
-parameter   RX_MODE     = 0;
-parameter   TX_MODE     = 1;
-parameter   TX_MANUAL   = 0;
-parameter   TX_CONVERTER= 1;
+localparam   RX_MODE     = 1'b0;
+localparam   TX_MODE     = 1'b1;
+localparam   TX_MANUAL   = 1'b0;
+localparam   TX_CONVERTER= 1'b1;
 
-parameter   DISPLAY_ADDRESS = 15'd0;
+localparam   DISPLAY_ADDRESS = 15'd0;
 
 input       clk;
 input       rstn;
@@ -68,6 +68,8 @@ wire [DATA_WIDTH - 1:0] s_out_data;
 reg                     s_in_dv     = 1;
 reg [DATA_WIDTH-1:0]    s_in_data   = 0;
 
+reg                     c_rst_reg   = 0;
+wire                    c_rst_wire;
 reg                     c_in_dv     = 0;
 reg                     c_en_s2p    = 0;
 wire                    c_out_dv;
@@ -88,6 +90,7 @@ wire[15:0]  half_baud_size;
 assign c_p_wire         =  mode         ? c_p_reg   : {PACKET_WIDTH{1'bZ}};
 assign c_s_wire         =  mode         ? 1'bZ      : rx;
 assign tx               =  tx_control   ? c_s_wire  : tx_manual_reg;
+assign c_rst_wire       =  c_rst_reg    ? 0         : rstn;
 
 assign half_baud_size   = {1'b0, baud_size[15:1]};
 
@@ -148,7 +151,7 @@ serial_parallel_2way#(
 )
 converter(
     .clk(baud_clk), 
-    .rstn(rstn), 
+    .rstn(c_rst_wire), 
     .dv_in(c_in_dv), 
     .invert_s2p(mode), 
     .en(c_en_s2p),
@@ -215,7 +218,19 @@ always @ (posedge clk, negedge rstn) begin
         case(state)
             IDLE        :   begin
                 mode    <=  RX_MODE;
-
+                tx_control      <= TX_MANUAL;
+                m_hold          <= 0;
+                m_execute       <= 0;
+                m_din           <= 0;
+                s_in_dv         <= 1;
+                c_in_dv         <= 0;
+                c_en_s2p        <= 0;
+                tx_manual_reg   <= 1; // TX is normally high
+                baud_size       <= BAUD_SIZE;
+                count           <= 16'd0;
+                count_20        <= 16'd0;
+                baud_clk        <= 16'd0;
+                
                 if      (~rx) begin
                     baud_size   <= 16'd1;
                     state       <= RX_1_COUNT;
@@ -258,7 +273,7 @@ always @ (posedge clk, negedge rstn) begin
 
             RX_3_RECEIVE_1: begin
                 if (~rx)    begin
-                    count           <= 16'd1;
+                    count           <= 16'd2;
                     state           <= RX_3_RECEIVE_2;
                 end
                 else
@@ -267,9 +282,7 @@ always @ (posedge clk, negedge rstn) begin
 
             RX_3_RECEIVE_2: begin
 
-                if (count == half_baud_size) begin
-                    //baud_clk <= 1;
-                          // start reading
+                if (count == baud_size) begin  // start reading
                     count    <= 16'd1;
                     state    <= RX_3_RECEIVE_3;
                 end
@@ -284,7 +297,7 @@ always @ (posedge clk, negedge rstn) begin
                 if (count == half_baud_size) begin
                     c_en_s2p <= 1;
                     baud_clk <= ~baud_clk;
-                    count <= 0;
+                    count <= 16'd1;
                 end
                 else
                     count <= count + 16'd1;
@@ -299,15 +312,15 @@ always @ (posedge clk, negedge rstn) begin
             end
 
             RX_3_RECEIVE_4: begin
-
-                baud_clk     <= 0;
+                
+                baud_clk     <= ~baud_clk;
                 m_din        <= c_p_wire;   // copy data
                 count        <= 16'd0;
                 state        <= RX_4_ACK_1;
             end
 
             RX_4_ACK_1  :   begin
-
+                baud_clk        <= ~baud_clk;
                 tx_control      <=  TX_MANUAL;
                 tx_manual_reg   <=  0;
                 count           <= count + 16'd1;
@@ -315,6 +328,7 @@ always @ (posedge clk, negedge rstn) begin
             end
 
             RX_4_ACK_2  :   begin
+                baud_clk <= ~baud_clk;
 
                 if (count == baud_size) begin
                     tx_manual_reg   <= 1;
@@ -348,6 +362,7 @@ always @ (posedge clk, negedge rstn) begin
                 if (m_dvalid) begin         // Master done writing
                     m_hold    <= 0;
                     baud_size <= BAUD_SIZE;
+                    baud_clk  <= 0;
                     state     <= IDLE;
                 end
                 else
@@ -500,8 +515,9 @@ always @ (posedge clk, negedge rstn) begin
                     count         <= count + 16'd1;
                 end
             end
-            TX_4_TRANSMIT_9:  begin             
-                
+            TX_4_TRANSMIT_9:  begin
+                c_rst_reg     <= 1;    
+                baud_clk      <= ~baud_clk;
                 mode          <= RX_MODE;
                 tx_control    <= TX_MANUAL;
                 c_in_dv       <= 0;
@@ -511,6 +527,8 @@ always @ (posedge clk, negedge rstn) begin
             end
 
             TX_5_ACK_1  :   begin           // Ack starts
+                c_rst_reg     <= 0;
+                baud_clk      <= ~baud_clk;
                 if (~rx) begin
                     s_in_dv <= 0;
                     state <= TX_5_ACK_2;
@@ -520,6 +538,7 @@ always @ (posedge clk, negedge rstn) begin
             end
 
             TX_5_ACK_2  :   begin           // Ack ends
+                baud_clk      <= ~baud_clk;
                 if (rx) begin
                     s_in_dv <= 1;
                     state   <= TX_5_ACK_3;
@@ -529,7 +548,8 @@ always @ (posedge clk, negedge rstn) begin
             end
 
             TX_5_ACK_3  :   begin           // Ack ends
-                state   <= IDLE;
+                baud_clk    <= 0;
+                state       <= IDLE;
             end
 
 
