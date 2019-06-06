@@ -8,7 +8,7 @@ Description  : Top module containig the arbiter,masters and slaves
 
 module bus_top_module(
     rstn,
-    clk,
+    in_clk,
     tx0,
     rx0,
     tx1,
@@ -18,6 +18,8 @@ module bus_top_module(
     hex2,
     hex3,
     hex4,
+    hex6,
+    hex7,
     requests,
     utilization,
     slave_busy,
@@ -40,7 +42,7 @@ localparam EXAMPLE_ADDR = 15'd27306;
 
 ////////////////////////////// Port declaration ////////////////////////////
 
-input clk;
+input in_clk;
 input rstn;
 input rx0;
 input rx1;
@@ -52,11 +54,13 @@ input master5_req;
 
 output tx0;
 output tx1;
-output hex0;
-output hex1;
-output hex2;
-output hex3;
-output hex4;
+output [6:0] hex0;
+output [6:0] hex1;
+output [6:0] hex2;
+output [6:0] hex3;
+output [6:0] hex4;
+output [6:0] hex6;
+output [6:0] hex7;
 output [11:0] requests;
 output utilization;
 output [5:0] slave_busy;
@@ -249,6 +253,29 @@ pulse pulse0(
 
 
 // Clocks
+// clk_1hz clock_1HZ(
+//     .clk_in, 
+//     .rst,
+//     .clk_1hz_out
+// );
+//Convert 10MHz clock to 1Hz clock						
+						
+clock_divider _10MHz_to_1Hz(
+			.inclk(_10MHz),
+			.ena(1),
+			.clk(clk));
+			
+//Convert 50MHz clock to 10MHz clock	
+			
+pll _50MHz_to_10MHz(
+	.inclk0(in_clk),
+.c0(_10MHz));
+
+
+
+// Assignments
+assign hex7 <= {4'b0,mid_current};
+
 
 
 endmodule
