@@ -36,13 +36,15 @@ module bus_top_module(
     master2_RW,
     master4_RW,
     test,
+    BUS,
     master5_RW
 );
-assign test =b_BUS;
+assign test = pul_master4_ex;
 wire [3:0] st;
 wire [3:0] st2;
+wire [3:0] st3;
 bi2bcd test_2(  // Display Current master's slave
-    .din({4'b0,st2}), // find a way to find its slave
+    .din({4'b0,st3}), // find a way to find its slave
     .dout2(),
     .dout1(),
     .dout0(hex3)
@@ -56,8 +58,8 @@ localparam CLK_PERIOD   = 10; //10ns
 localparam EXAMPLE_DATA = 8'd203;
 localparam EXAMPLE_ADDR = 15'd27306;
 
-localparam MSTR2_ADDRS  = {3'd3,12'b0};
-localparam MSTR4_ADDRS  = {3'd4,12'd2564};
+localparam MSTR2_ADDRS  = {3'd3,12'd0};
+localparam MSTR4_ADDRS  = {3'd3,12'd0};
 localparam MSTR5_ADDRS  = {3'd4,12'd1500};
 
 localparam MSTR2_DIN    = 8'd231;
@@ -88,6 +90,7 @@ input master2_RW;    // SW1
 input master4_RW;    // SW3
 input master5_RW;    // SW5
 
+output BUS;
 output test;
 output tx0;
 output tx1;
@@ -142,21 +145,20 @@ wire b_request2;
 wire [6:0] dout0_m2;
 wire [6:0] dout1_m2;
 wire [6:0] dout2_m2;
-//-//
-//-//// Master4
-//-//wire deb_master4_hold;
-//-//wire deb_master4_ex;
-//-//wire pul_master4_ex;
-//-//wire deb_master4_RW;
-//-//wire [DATA_WIDTH-1:0] m_dout4;
-//-//wire m_dvalid4;
-//-//wire m_master_bsy4;
-//-//wire b_request4;
-//-//wire [6:0] dout0_m4;
-//-//wire [6:0] dout1_m4;
-//-//wire [6:0] dout2_m4;
-//-//
-//-//// Master5
+
+// Master4
+wire deb_master4_hold;
+wire deb_master4_ex;
+wire pul_master4_ex;
+wire deb_master4_RW;
+wire [DATA_WIDTH-1:0] m_dout4;
+wire m_dvalid4;
+wire m_master_bsy4;
+wire b_request4;
+wire [6:0] dout0_m4;
+wire [6:0] dout1_m4;
+wire [6:0] dout2_m4;
+/// Master5
 //-//wire deb_master5_hold;
 //-//wire deb_master5_ex;
 //-//wire pul_master5_ex;
@@ -196,8 +198,7 @@ wire [6:0] dout2_s3;
 
 
 ////////////////////////////// Instantiations //////////////////////////////
-//wire [5:0] tt;
-//assign tt = 6'bZ;
+
 /////// Bus controller
 bus_controller Bus_Controller(
     .clk(clk),
@@ -241,34 +242,35 @@ master_2(
     .state(st2), //remove
     .b_bus_utilizing(b_bus_utilizing)
 );
-    //wire [3:0] st2; //remove
-//-//// Master4
-//-//master #(
-//-//    .DATA_WIDTH(DATA_WIDTH),
-//-//    .ADDRS_WIDTH(ADDRS_WIDTH),
-//-//    .TIMEOUT_LEN(TIMEOUT_LEN), //in bits 4 means 16 clocks
-//-//    .BIT_LENGTH(BIT_LENGTH)
-//-//)
-//-//master_4(
-//-//    .clk(clk),
-//-//    .rstn(deb_rstn),
-//-//
-//-//    .m_hold(deb_master4_hold),
-//-//    .m_execute(pul_master4_ex),
-//-//    .m_RW(deb_master4_RW),
-//-//    .m_address(MSTR4_ADDRS),
-//-//    .m_din(MSTR4_DIN),
-//-//    .m_dout(m_dout4),
-//-//    .m_dvalid(m_dvalid4),
-//-//    .m_master_bsy(m_master_bsy4),
-//-//
-//-//    .b_grant(m_grants[4]),
-//-//    .b_BUS(b_BUS),
-//-//    .b_request(b_request4),
-//-//    .b_RW(b_RW),
-//-//    .b_bus_utilizing(b_bus_utilizing)
-//-//);
-//-//
+
+// Master4
+master #(
+    .DATA_WIDTH(DATA_WIDTH),
+    .ADDRS_WIDTH(ADDRS_WIDTH),
+    .TIMEOUT_LEN(TIMEOUT_LEN), //in bits 4 means 16 clocks
+    .BIT_LENGTH(BIT_LENGTH)
+)
+master_4(
+    .clk(clk),
+    .rstn(deb_rstn),
+
+    .m_hold(deb_master4_hold),
+    .m_execute(pul_master4_ex),
+    .m_RW(deb_master4_RW),
+    .m_address(MSTR4_ADDRS),
+    .m_din(MSTR4_DIN),
+    .m_dout(m_dout4),
+    .m_dvalid(m_dvalid4),
+    .m_master_bsy(m_master_bsy4),
+
+    .b_grant(m_grants[4]),
+    .b_BUS(b_BUS),
+    .b_request(b_request4),
+    .b_RW(b_RW),
+    .state(st3),
+    .b_bus_utilizing(b_bus_utilizing)
+);
+
 //-//// Master5
 //-//master #(
 //-//    .DATA_WIDTH(DATA_WIDTH),
@@ -307,7 +309,8 @@ master_2(
 //-//    .bus_util(b_bus_utilizing),
 //-//    .data_bus_serial(b_BUS), 
 //-//    .b_RW(b_RW),
-//-//    .slave_busy(slaves[0]),
+//-//    .arbiter_cmd_in(arbiter2slave[0]),
+//-//    .busy_out(slave2arbiter[0]),
 //-//
 //-//    .b_request(b_request0),
 //-//    .dout0(dout0_s0),
@@ -510,11 +513,7 @@ pulse pulse2(
 
 
 ////////////////////////////////////// Clocks //////////////////////////////////
-// clk_1hz clock_1HZ(
-//     .clk_in, 
-//     .rst,
-//     .clk_1hz_out
-// );
+ 
 //Convert 10MHz clock to 1Hz clock						
 						
 clock_divider _10MHz_to_1Hz(
@@ -552,13 +551,13 @@ bi2bcd master_data2(
     .dout0(dout0_m2)
     );
 
-//-//bi2bcd master_data4(  
-//-//    .din(m_dout4), 
-//-//    .dout2(dout2_m4),
-//-//    .dout1(dout1_m4),
-//-//    .dout0(dout0_m4)
-//-//    );
-//-//
+bi2bcd master_data4(  
+    .din(m_dout4), 
+    .dout2(dout2_m4),
+    .dout1(dout1_m4),
+    .dout0(dout0_m4)
+    );
+
 //-//bi2bcd master_data5(  
 //-//    .din(m_dout5), 
 //-//    .dout2(dout2_m5),
@@ -587,12 +586,13 @@ mux_1_1 clk_multiplexer(
     .result(clk)
 );
 
+// To mux the busy status of the current master
 mux_1_16 current_master_bsy_mux(
     .data0(1'b0),    
     .data1(1'b0),
     .data2(m_master_bsy2),
     .data3(1'b0),
-    .data4(1'b0),//-//m_master_bsy4),
+    .data4(m_master_bsy4),
     .data5(1'b0),//-//m_master_bsy5),
     .data6(1'b0),
     .data7(1'b0),
@@ -613,6 +613,7 @@ mux_1_16 current_master_bsy_mux(
 ///////////////////////////////////////// Assignments //////////////////////////////////
 assign requests         = m_reqs;
 assign utilization      = ~b_bus_utilizing;
+assign BUS              = b_BUS;
 
 // Assigning 0 to free ports .comment connected slaves
 assign slave2arbiter[0] =1'b0;
@@ -623,23 +624,9 @@ assign slave2arbiter[4] =1'b0;
 assign slave2arbiter[5] =1'b0;
 assign slave_busy = slave2arbiter|arbiter2slave;
 
-assign current_m_bsy    = current_m_bsy_mux_out;// {0,0,0,0,0,0,m_master_bsy5,m_master_bsy4,0,m_master_bsy2,0,0}[mid_current];
-assign m_reqs           = {9'b0,b_request2,2'b0};//-//{1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,b_request5,b_request4,1'b0,b_request2,1'b0,b_request0};
+assign current_m_bsy    = current_m_bsy_mux_out;
+assign m_reqs           = {7'b0,b_request4,1'b0,b_request2,2'b0};//-//{1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,b_request5,b_request4,1'b0,b_request2,1'b0,b_request0};
 assign {hex2,hex1,hex0} = mux_out;//{dout2_s0,dout1_s0,dout0_s0};//?{dout2,dout1,dout0}:{,,};
-// reg [20:0]
-// always@(mux_switch)
-// begin
-//     case(mux_switch)
-//         3'd0: 
-//         3'd1:
-//         3'd2:
-//         3'd3:
-//         3'd4:
-//         3'd5:
-//         3'd6:
-//         3'd7:
-//         default:
-//     endcase
-// end
+
 
 endmodule
