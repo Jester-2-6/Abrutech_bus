@@ -426,18 +426,18 @@ debouncer debounce2(
     .button_out(deb_master5_hold));
 
 debouncer debounce3(
-    .button_in(master2_ex),
+    .button_in(~master2_ex),
     .clk(in_clk),
     .button_out(deb_master2_ex));
 
 
 debouncer debounce4(
-    .button_in(master4_ex),
+    .button_in(~master4_ex),
     .clk(in_clk),
     .button_out(deb_master4_ex));
     
 debouncer debounce5(
-    .button_in(master5_ex),
+    .button_in(~master5_ex),
     .clk(in_clk),
     .button_out(deb_master5_ex));
 
@@ -611,7 +611,7 @@ mux_1_16 current_master_bsy_mux(
 
 ///////////////////////////////////////// Assignments //////////////////////////////////
 assign requests         = m_reqs;
-assign utilization      = b_bus_utilizing;
+assign utilization      = ~b_bus_utilizing;
 
 // Assigning 0 to free ports .comment connected slaves
 assign slave2arbiter[0] =1'b0;
