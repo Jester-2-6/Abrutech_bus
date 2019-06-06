@@ -19,13 +19,15 @@ module master(
     m_dvalid,
     m_master_bsy,
 
-    ///state, //remove
+    state, //remove
     b_grant,
     b_BUS,
     b_request,
     b_RW,
     b_bus_utilizing
 );
+output [3:0]state;
+assign state = STATE;
 
 // Parameters
 parameter DATA_WIDTH  = 8;

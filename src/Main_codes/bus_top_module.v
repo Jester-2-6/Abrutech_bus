@@ -40,8 +40,9 @@ module bus_top_module(
 );
 //assign test =slaves[3];
 wire [3:0] st;
+wire [3:0] st2;
 bi2bcd test_2(  // Display Current master's slave
-    .din({4'b0,st}), // find a way to find its slave
+    .din({4'b0,st2}), // find a way to find its slave
     .dout2(),
     .dout1(),
     .dout0(hex3)
@@ -237,7 +238,7 @@ master_2(
     .b_BUS(b_BUS),
     .b_request(b_request2),
     .b_RW(b_RW),
-    //.state(st2), //remove
+    .state(st2), //remove
     .b_bus_utilizing(b_bus_utilizing)
 );
     //wire [3:0] st2; //remove
