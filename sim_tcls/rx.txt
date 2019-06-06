@@ -1,26 +1,116 @@
+#------------TX
 vlog -work work U:/aba/Desktop_Win/Abrutech_bus/src/Main_codes/ext_interface.sv
 restart
 force -freeze sim:/ext_interface/clk 1 0, 0 {5 ps} -r 10
 run 100
+#------------ FIRST RX [0000-0000]
 force -freeze sim:/ext_interface/rx 0 0
 run 80
 force -freeze sim:/ext_interface/rx 1 0
 run 200
 force -freeze sim:/ext_interface/rx 0 0
 run 240
-force -freeze sim:/ext_interface/rx 1 0
+#-- rx data starts
+force -freeze sim:/ext_interface/rx 0 0
 run 640
+force -freeze sim:/ext_interface/rx 1 0
+#-- rx data done
 run 400
 force -freeze sim:/ext_interface/b_grant 1 0
+run 300
+force -freeze sim:/ext_interface/m_dvalid 1 0
+run 10
+force -freeze sim:/ext_interface/m_dvalid 0 0
+run 200
+#------------ SECOND RX [0011-0011]
+force -freeze sim:/ext_interface/rx 0 0
+run 80
+force -freeze sim:/ext_interface/rx 1 0
+run 200
+force -freeze sim:/ext_interface/rx 0 0
+run 240
+#-- rx data starts
+force -freeze sim:/ext_interface/rx 0 0
+run 160
+force -freeze sim:/ext_interface/rx 1 0
+run 160
+force -freeze sim:/ext_interface/rx 0 0
+run 160
+force -freeze sim:/ext_interface/rx 1 0
+#-- rx data done
+run 400
+force -freeze sim:/ext_interface/b_grant 1 0
+run 300
+force -freeze sim:/ext_interface/m_dvalid 1 0
+run 10
+force -freeze sim:/ext_interface/m_dvalid 0 0
+run 200
+#------------ THIRD RX [0000-0111]
+force -freeze sim:/ext_interface/rx 0 0
+run 80
+force -freeze sim:/ext_interface/rx 1 0
+run 200
+force -freeze sim:/ext_interface/rx 0 0
+run 240
+#-- rx data starts
+force -freeze sim:/ext_interface/rx 0 0
+run 400
+force -freeze sim:/ext_interface/rx 1 0
+run 240
+#-- rx data done
+run 400
+force -freeze sim:/ext_interface/b_grant 1 0
+run 300
+force -freeze sim:/ext_interface/m_dvalid 1 0
+run 10
+force -freeze sim:/ext_interface/m_dvalid 0 0
+run 200
+
+
+
+#------------TX
+vlog -work work U:/aba/Desktop_Win/Abrutech_bus/src/Main_codes/ext_interface.sv
+restart
+force -freeze sim:/ext_interface/clk 1 0, 0 {5 ps} -r 10
+#------------ FIRST TX [10101010]
+force -freeze sim:/ext_interface/s_out_data 10101010 0
 run 100
-
-
-
-
-#TX
 force -freeze sim:/ext_interface/s_out_dv 1 0
 run 100
 force -freeze sim:/ext_interface/rx 0 0
 run 80
+force -freeze sim:/ext_interface/rx 1 0
+run 1500
+force -freeze sim:/ext_interface/rx 0 0
+run 80
+force -freeze sim:/ext_interface/s_out_dv 0 0
+force -freeze sim:/ext_interface/rx 1 0
+run 300
+#------------ SECOND TX [11001100]
+force -freeze sim:/ext_interface/s_out_data 11001100 0
+run 100
+force -freeze sim:/ext_interface/s_out_dv 1 0
+run 100
+force -freeze sim:/ext_interface/rx 0 0
+run 80
+force -freeze sim:/ext_interface/rx 1 0
+run 1500
+force -freeze sim:/ext_interface/rx 0 0
+run 80
+force -freeze sim:/ext_interface/s_out_dv 0 0
+force -freeze sim:/ext_interface/rx 1 0
+run 300
+#------------ THIRD TX [11100011]
+force -freeze sim:/ext_interface/s_out_data 11001100 0
+run 100
+force -freeze sim:/ext_interface/s_out_dv 1 0
+run 100
+force -freeze sim:/ext_interface/rx 0 0
+run 80
+force -freeze sim:/ext_interface/rx 1 0
+run 1500
+force -freeze sim:/ext_interface/rx 0 0
+run 80
+force -freeze sim:/ext_interface/s_out_dv 0 0
 force -freeze sim:/ext_interface/rx 1 0
 run 300

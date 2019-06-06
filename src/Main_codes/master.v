@@ -26,6 +26,8 @@ module master(
     b_RW,
     b_bus_utilizing
 );
+output [3:0]state;
+assign state = STATE;
 
 // Parameters
 parameter DATA_WIDTH  = 8;
@@ -53,8 +55,8 @@ output reg                   b_request = 1'b0;
 output                       b_RW;             // Usually pulldown
 output                       b_bus_utilizing;  // Usually pulldown
 /// remove after debugging
-output [3:0] state; //remove
-assign state = IDLE;//remove
+///output [3:0] state; //remove
+///assign state = IDLE;//remove
 ///
 
 // States
@@ -113,7 +115,7 @@ serial_parallel_2way #(
 
 // Assignments
 assign b_RW                    = (bus_util_reg)? RW_reg:1'bZ; // Idle RW will be Read(0)
-assign b_bus_utilizing         = (bus_util_reg)? 1'b1:1'bZ;   //Idle bus will be pull down
+assign b_bus_utilizing         = (bus_util_reg)? 1'b0:1'bZ;   //Idle bus will be pull up
 assign converter_parallel_line = (bus_util_reg & bus_in_out_reg) ? conv_parallel_reg: {ADDRS_WIDTH{1'bZ}};
 assign m_dout                  = data_reg;
 //assign b_BUS           = (bus_util_reg & bus_in_out_reg) ? (whatever writing port):1'bZ;
@@ -146,7 +148,7 @@ begin
 
             IDLE:
             begin
-                data_reg       <= {DATA_WIDTH{1'b0}};
+                //data_reg       <= {DATA_WIDTH{1'b0}};
                 m_dvalid       <= 1'b0;
                 RW_reg         <= 1'b0;
                 address_reg    <= {ADDRS_WIDTH{1'b0}};

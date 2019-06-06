@@ -30,8 +30,8 @@ begin
         dout <= 1'b1;
     end else begin
         temp <= din;
-        if({temp,din} == 2'b10) dout <= 1'b0;
-        else    dout <= 1'b1;
+        if({temp,din} == 2'b01) dout <= 1'b1;
+        else    dout <= 1'b0;
     end
 end 
 

@@ -11,7 +11,8 @@ module bus_controller (
     rstn,
     m_reqs,
     m_grants,
-    slaves,
+    slaves_in,
+    slaves_out,
     bus_util,
     state,
     mid_current
@@ -22,7 +23,9 @@ input       rstn;
 input       bus_util;
 input  wire [11:0]      m_reqs;
 output reg  [11:0]      m_grants = 12'b000000000000;
-inout       [5:0]       slaves;
+input       [5:0]       slaves_in;
+output reg  [5:0]       slaves_out = 6'd0;
+// inout       slave_0, slave_1, slave_2, slave_3, slave_4, slave_5;
 
 // Parameters:
 parameter MID_NONE      = 4'b1111;
@@ -36,17 +39,18 @@ parameter P3            = 2'b10;
 
 // States
 parameter IDLE          = 4'd0;
-parameter BUSY_SLAVE_1  = 4'd1;
+parameter BUSY_SLAVE_1  = 4'd6;
 parameter BUSY_SLAVE_2  = 4'd2;
 parameter SEARCH_S      = 4'd3;
 parameter SEARCH_P1     = 4'd4;
 parameter SEARCH_P2     = 4'd5;
-parameter SEARCH_P3     = 4'd6;
+parameter SEARCH_P3     = 4'd1;
 parameter FOUND         = 4'd7;
 parameter GRANT_1       = 4'd8;
 parameter GRANT_2       = 4'd9;
 parameter ACK_SLAVE_1   = 4'd10;
 parameter ACK_SLAVE_2   = 4'd11;
+parameter WAIT          = 4'd12;
 
 // Regs
 output reg [3:0]   state       = IDLE;
@@ -56,8 +60,6 @@ reg [3:0]   mid_search  = MID_NONE;
 reg [3:0]   mid_grant   = MID_NONE;// 1111 => None granted
 reg [11:0]  mid_blocked = 12'b000000000000;
 
-reg [5:0] slaves_inout_reg    = 6'b000000; // Pulled down
-reg [5:0] slaves_inout_dir    = 6'b111111; // All inputs
 
 reg [1:0]   slaves_state[5:0] = '{SLAVE_FREE, SLAVE_FREE, SLAVE_FREE, 
                                   SLAVE_FREE, SLAVE_FREE, SLAVE_FREE};
@@ -67,6 +69,8 @@ reg [2:0]   sid_busy    = SID_NONE;
 reg [2:0]   sid_done    = SID_NONE;
 reg slave_got_busy      = 0;
 reg switch_to_slave     = 0;
+
+reg [2:0]   wait_counter= 3'd0;
 
 // Wires
 wire any_p1_req;
@@ -79,14 +83,6 @@ wire [1:0] p_current;
 // Assignments
 
 assign p_current = mid_current[3:2];
-
-// slaves inout is input when dir = 1 and output (reg) when dir = 0
-assign slaves[0] = slaves_inout_dir[0] ? 1'bz : slaves_inout_reg[0];
-assign slaves[1] = slaves_inout_dir[1] ? 1'bz : slaves_inout_reg[1];
-assign slaves[2] = slaves_inout_dir[2] ? 1'bz : slaves_inout_reg[2];
-assign slaves[3] = slaves_inout_dir[3] ? 1'bz : slaves_inout_reg[3];
-assign slaves[4] = slaves_inout_dir[4] ? 1'bz : slaves_inout_reg[4];
-assign slaves[5] = slaves_inout_dir[5] ? 1'bz : slaves_inout_reg[5];
 
 
 // Filter requests by ~blocked bit and take
@@ -132,10 +128,9 @@ always @ (posedge clk, negedge rstn) begin
         state                   <= IDLE;
         mid_current             <= MID_NONE;
         mid_search              <= MID_NONE;
+        slaves_out              <= 6'd0;
         mid_grant               <= MID_NONE;// 1111 => None granted
         mid_blocked             <= 12'b000000000000;
-        slaves_inout_reg        <= 6'b000000; // Pulled down
-        slaves_inout_dir        <= 6'b111111; // All inputs
         slaves_state[5:0]       <= '{SLAVE_FREE, SLAVE_FREE, SLAVE_FREE,
                                     SLAVE_FREE, SLAVE_FREE, SLAVE_FREE};
         slaves_mid  [5:0]       <= '{MID_NONE, MID_NONE, MID_NONE,
@@ -163,7 +158,7 @@ always @ (posedge clk, negedge rstn) begin
                 else if (any_p3_req)        state <= SEARCH_P3;
                 else                        state <= IDLE;
 
-                if (~bus_util) begin  // Master dropped
+                if (bus_util) begin  // Master dropped
                     mid_grant   <= MID_NONE;
                     mid_current <= MID_NONE;
                 end
@@ -181,10 +176,10 @@ always @ (posedge clk, negedge rstn) begin
             end
 
             BUSY_SLAVE_2: begin
-                if (bus_util)   state   <= BUSY_SLAVE_2;
+                if (~bus_util)   state   <= BUSY_SLAVE_2;
                 else begin
-                            mid_current <= MID_NONE;
-                            state       <= IDLE;
+                    mid_current <= MID_NONE;
+                    state       <= IDLE;
                 end
             end
 
@@ -251,7 +246,7 @@ always @ (posedge clk, negedge rstn) begin
             FOUND: begin
                 mid_grant <= MID_NONE;
                 
-                if (bus_util) state <= FOUND;   // Wait until bus is free
+                if (~bus_util) state <= FOUND;   // Wait until bus is free
                 else          state <= GRANT_1;
             end
 
@@ -264,36 +259,46 @@ always @ (posedge clk, negedge rstn) begin
             end
 
             GRANT_2: begin
-                if      (~bus_util)         state <= GRANT_2;  // wait until master picks up the bus
+                if      (bus_util)          state <= GRANT_2;  // wait until master picks up the bus
                 else if (switch_to_slave)   state <= ACK_SLAVE_1;
                 else                        state <= IDLE;
             end
 
             ACK_SLAVE_1: begin
-                slaves_inout_dir[sid_done]  <= 0; // Make output
-                slaves_inout_reg[sid_done]  <= 1; // send one bit
+                // slaves_inout_dir[sid_done]  <= 0; // Make output
+                slaves_out[sid_done]        <= 1; // send one bit
                 
                 state <= ACK_SLAVE_2;
             end
 
             ACK_SLAVE_2: begin
-                slaves_inout_dir[sid_done]  <= 1; // Make input
-                slaves_inout_reg[sid_done]  <= 0;
+                // slaves_inout_dir[sid_done]  <= 1; // Make input
+                slaves_out[sid_done]        <= 0;
 
                 slaves_mid[sid_done]        <= MID_NONE;
                 slaves_state[sid_done]      <= SLAVE_FREE;
                 sid_done                    <= SID_NONE;
                 switch_to_slave             <= 0;
                 mid_blocked[mid_current]    <= 0;
+                wait_counter                <= 3'd1;
 
-                state <= IDLE;
+                state <= WAIT;
+            end
+
+            WAIT   : begin
+                if (wait_counter == 3'd0)
+                    state                   <= IDLE;
+                else begin
+                    wait_counter            <= wait_counter + 3'd1;
+                    state                   <= WAIT;
+                end
             end
 
         endcase
 
-        // Check if a slave just got BUSY.
+        //Check if a slave just got BUSY.
         for (int i = 0; i < 6; i=i+1) begin
-            if ((slaves_state[i] == SLAVE_FREE) & (slaves[i] == 1) & slaves_inout_dir[i]==1) begin
+            if ((slaves_state[i] == SLAVE_FREE) & (slaves_in[i] == 1) ) begin
                 slaves_state[i] <= SLAVE_BUSY; 
                 slave_got_busy  <= 1;
                 sid_busy        <= i;
@@ -302,7 +307,7 @@ always @ (posedge clk, negedge rstn) begin
         
         // Check if a slave just got DONE.
         for (int i = 0; i < 6; i=i+1) begin
-            if ((slaves_state[i] == SLAVE_BUSY) & (slaves[i] == 0) & slaves_inout_dir[i]==1) begin
+            if ((slaves_state[i] == SLAVE_BUSY) & (slaves_in[i] == 0) ) begin
                 slaves_state[i]     <= SLAVE_DONE;
             end
         end

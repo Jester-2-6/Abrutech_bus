@@ -16,7 +16,7 @@ module display_module(
     inout b_RW,
     input arbiter_cmd_in,
 
-    output wire busy_out,
+    output busy_out,
     output b_request,
     output [6:0] dout0,
     output [6:0] dout1,
@@ -89,16 +89,18 @@ module display_module(
     ) slave_display(
         .clk(clk), 
         .rstn(rstn), 
-        .rd_wrt(1'b0), 
+        .rd_wrt(1'b1), 
         .bus_util(bus_util), 
         .module_dv(slave_dv),
         .data_in_parellel(display_buffer),
 
         .write_en_internal(update_disp),
+        .req_int_data(),
         .data_out_parellel(data_out_parallel),
         .data_bus_serial(data_bus_serial), 
         .arbiter_cmd_in(arbiter_cmd_in),
         .busy_out(busy_out),
+        .addr_buff()
     );
 
     bi2bcd disp (
