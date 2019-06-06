@@ -54,12 +54,9 @@ force -freeze sim:/ext_interface/rx 0 0
 run 240
 #-- rx data starts
 force -freeze sim:/ext_interface/rx 0 0
-run 160
+run 400
 force -freeze sim:/ext_interface/rx 1 0
-run 160
-force -freeze sim:/ext_interface/rx 0 0
-run 160
-force -freeze sim:/ext_interface/rx 1 0
+run 240
 #-- rx data done
 run 400
 force -freeze sim:/ext_interface/b_grant 1 0
