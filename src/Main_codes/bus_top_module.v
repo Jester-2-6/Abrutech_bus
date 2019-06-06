@@ -110,7 +110,7 @@ wire                    deb_rstn;
 wire                    clk;
 wire (strong0,weak1)    b_BUS;           // Pullup
 wire (weak0,strong1)    b_RW ;           // Pulldown
-wire (weak0,strong1)    b_bus_utilizing; // Pulldown
+wire (strong0,weak1)    b_bus_utilizing; // Pullup
 wire                    _10MHz;
 wire                    _1Hz;
 wire [20:0]             mux_out;

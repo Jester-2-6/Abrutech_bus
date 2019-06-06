@@ -113,7 +113,7 @@ serial_parallel_2way #(
 
 // Assignments
 assign b_RW                    = (bus_util_reg)? RW_reg:1'bZ; // Idle RW will be Read(0)
-assign b_bus_utilizing         = (bus_util_reg)? 1'b1:1'bZ;   //Idle bus will be pull down
+assign b_bus_utilizing         = (bus_util_reg)? 1'bZ:1'b0;   //Idle bus will be pull up
 assign converter_parallel_line = (bus_util_reg & bus_in_out_reg) ? conv_parallel_reg: {ADDRS_WIDTH{1'bZ}};
 assign m_dout                  = data_reg;
 //assign b_BUS           = (bus_util_reg & bus_in_out_reg) ? (whatever writing port):1'bZ;
