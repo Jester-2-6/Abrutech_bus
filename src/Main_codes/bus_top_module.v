@@ -38,7 +38,7 @@ module bus_top_module(
     test,
     master5_RW
 );
-//assign test =slaves[3];
+assign test =b_BUS;
 wire [3:0] st;
 wire [3:0] st2;
 bi2bcd test_2(  // Display Current master's slave
