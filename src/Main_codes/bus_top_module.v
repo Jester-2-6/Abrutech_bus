@@ -17,9 +17,9 @@ module bus_top_module(
     hex1,
     hex2,
     hex3,
-    //hex4,
-    //hex5,
-    //hex6,
+    hex4,
+    hex5,
+    hex6,
     hex7,
     requests,
     utilization,
@@ -80,9 +80,9 @@ output [6:0] hex0;
 output [6:0] hex1;
 output [6:0] hex2;
 output [6:0] hex3;
-// output [6:0] hex4;
-// output [6:0] hex5;
-//output [6:0] hex6;
+output [6:0] hex4;
+output [6:0] hex5;
+output [6:0] hex6;
 output [6:0] hex7;
 output [11:0] requests;
 output current_m_bsy;
@@ -425,9 +425,24 @@ pll _50MHz_to_10MHz(
 .c0(_10MHz));
 
 
+// SSDisplays
+bi2bcd ssd76(  // Display Current master
+    .din({4'b0,mid_current}),
+    .dout2(),
+    .dout1(hex7),
+    .dout0(hex6)
+    );
+
+bi2bcd ssd54(  // Display Current master's slave
+    .din({4'b0,mid_current}), // find a way to find its slave
+    .dout2(),
+    .dout1(hex5),
+    .dout0(hex4)
+    );
+
+
 
 // Assignments
-assign hex7             = {4'b0,mid_current};
 assign requests         = m_reqs;
 assign utilization      = b_bus_utilizing;
 assign slave_busy       = slaves;
