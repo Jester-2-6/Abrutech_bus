@@ -19,6 +19,7 @@ module master(
     m_dvalid,
     m_master_bsy,
 
+    state, //remove
     b_grant,
     b_BUS,
     b_request,
@@ -51,7 +52,10 @@ inout                        b_BUS;            // Master bus. Have to rout the c
 output reg                   b_request = 1'b0;
 output                       b_RW;             // Usually pulldown
 output                       b_bus_utilizing;  // Usually pulldown
-
+/// remove after debugging
+output [3:0]state; //remove
+assign state <= STATE;//remove
+///
 
 // States
 localparam IDLE                 = 4'd0;
