@@ -118,7 +118,12 @@ wire                    current_m_bsy_mux_out;
 //Bus controller
 wire                  [11:0] m_reqs;
 wire                  [11:0] m_grants;
-wire  (weak0,strong1) [5:0]  slaves; // Pulldown
+wire  (weak0,strong1)        slaves0; // Pulldown
+wire  (weak0,strong1)        slaves1; // Pulldown
+wire  (weak0,strong1)        slaves2; // Pulldown
+wire  (weak0,strong1)        slaves3; // Pulldown
+wire  (weak0,strong1)        slaves4; // Pulldown
+wire  (weak0,strong1)        slaves5; // Pulldown
 wire                  [3:0]  mid_current;
 //wire [3:0] state;
 
@@ -201,11 +206,26 @@ bus_controller Bus_Controller(
     .rstn(deb_rstn),
     .m_reqs(m_reqs),
     .m_grants(m_grants),
-    .slaves(slaves),
+    //.slaves(slaves),
+    .slave_0(aa),
+    .slave_1(aa),
+    .slave_2(aa),
+    .slave_3(aa),
+    .slave_4(aa),
+    .slave_5(aa),
     .bus_util(b_bus_utilizing),
     .state(st),//.state(state),
     .mid_current(mid_current)
 );
+
+always@(posedge clk)
+begin
+    bb<= master2_hold;
+end
+reg bb = 1'b0;
+wire (strong0,weak1) aa;
+assign aa =bb?1'bZ:bb;
+
 
 ////////////////////////////////// Masters ////////////////////////////////
 
@@ -330,7 +350,7 @@ slave_3
     .disp_out0(dout0_s3),        
 
     .data_bus_serial(b_BUS), 
-    .slave_busy(slaves[3])
+    .slave_busy(slaves3)
 );
 
 
@@ -607,12 +627,12 @@ mux_1_16 current_master_bsy_mux(
 ///////////////////////////////////////// Assignments //////////////////////////////////
 assign requests         = m_reqs;
 assign utilization      = b_bus_utilizing;
-assign slave_busy[0]       = slaves[0]?1'b1:1'b0;//slaves[0]?1'b1:1'b0;
-assign slave_busy[1]       = slaves[1]?1'b1:1'b0;
-assign slave_busy[2]       = slaves[2]?1'b1:1'b0;
-assign slave_busy[3]       = slaves[3]?1'b1:1'b0;
-assign slave_busy[4]       = slaves[4]?1'b1:1'b0;
-assign slave_busy[5]       = slaves[5]?1'b1:1'b0;
+//assign slave_busy[0]       = slaves0?1'b1:1'b0;//slaves[0]?1'b1:1'b0;
+//assign slave_busy[1]       = slaves1?1'b1:1'b0;
+//assign slave_busy[2]       = slaves2?1'b1:1'b0;
+//assign slave_busy[3]       = slaves3?1'b1:1'b0;
+//assign slave_busy[4]       = slaves4?1'b1:1'b0;
+//assign slave_busy[5]       = slaves5?1'b1:1'b0;
 assign current_m_bsy    = current_m_bsy_mux_out;// {0,0,0,0,0,0,m_master_bsy5,m_master_bsy4,0,m_master_bsy2,0,0}[mid_current];
 assign m_reqs           = {9'b0,b_request2,2'b0};//-//{1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,b_request5,b_request4,1'b0,b_request2,1'b0,b_request0};
 assign {hex2,hex1,hex0} = mux_out;//{dout2_s0,dout1_s0,dout0_s0};//?{dout2,dout1,dout0}:{,,};

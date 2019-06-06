@@ -15,15 +15,16 @@ module slave #(
     input rd_wrt, 
     input bus_util, 
     input module_dv,
+    input arbiter_cmd_in,
     input [DATA_WIDTH - 1:0] data_in_parellel,
 
-    output reg write_en_internal = 1'b0, //make done bidirectional
-    output reg req_int_data      = 1'b0,
+    output reg write_en_internal                    = 1'b0, //make done bidirectional
+    output reg req_int_data                         = 1'b0,
+    output reg busy_out                             = 1'b0,
     output reg [DATA_WIDTH - 1:0] data_out_parellel = {DATA_WIDTH{1'b0}},
     output reg [ADDRESS_WIDTH -1:0] addr_buff       = {ADDRESS_WIDTH{1'b0}},
 
-    inout data_bus_serial, 
-    inout slave_busy
+    inout data_bus_serial
 );
 
     localparam IDLE                = 4'd0 ;
@@ -50,16 +51,15 @@ module slave #(
     reg serial_rx_enable        = 1'b0;
     reg serial_tx_start         = 1'b0;
     reg data_dir_inv_s2p        = 1'b0;
-    reg slave_busy_reg          = 1'b0;
     reg ack_counter             = 1'b0;
     reg serial_buff             = 1'bZ;
 
-    reg [DATA_WIDTH - 1:0] read_width               = {DATA_WIDTH{1'b0}};
-    reg [3:0] state                                 = IDLE;
-    reg [ADDRESS_WIDTH - 1:0] parallel_buff         = {ADDRESS_WIDTH{1'b0}};
-    reg [3:0] timeout_counter                       = 4'b0;
-    reg [3:0] temp_state_reg                        = 4'b0;
-    reg [1:0] slave_match_reg                       = 2'b0;
+    reg [DATA_WIDTH - 1:0]      read_width       = {DATA_WIDTH{1'b0}};
+    reg [3:0]                   state            = IDLE;
+    reg [ADDRESS_WIDTH - 1:0]   parallel_buff    = {ADDRESS_WIDTH{1'b0}};
+    reg [3:0]                   timeout_counter  = 4'b0;
+    reg [3:0]                   temp_state_reg   = 4'b0;
+    reg [1:0]                   slave_match_reg  = 2'b0;
 
     serial_parallel_2way #(
         .PORT_WIDTH(ADDRESS_WIDTH),
@@ -79,7 +79,6 @@ module slave #(
 
     // tristate buffers
     assign parallel_port_wire = data_dir_inv_s2p ? parallel_buff : {ADDRESS_WIDTH{1'bZ}};
-    assign slave_busy = slave_busy_reg ? 1'b1 : 1'bZ;
     assign data_bus_serial = serial_buff;
 
     // main execution
@@ -92,11 +91,11 @@ module slave #(
             data_dir_inv_s2p        <= 1'b0;
             addr_buff               <= {ADDRESS_WIDTH{1'b0}};
             data_out_parellel       <= {DATA_WIDTH{1'b0}};
-            slave_busy_reg          <= 1'b0;
             serial_buff             <= 1'bZ;
             timeout_counter         <= 4'b0;
             temp_state_reg          <= 4'b0;
             req_int_data            <= 1'b0;
+            busy_out                <= 1'b0;
 
         end else begin
             case (state)
@@ -109,11 +108,11 @@ module slave #(
                         data_dir_inv_s2p        <= 1'b0;
                         addr_buff               <= {ADDRESS_WIDTH{1'b0}};
                         data_out_parellel       <= {DATA_WIDTH{1'b0}};
-                        slave_busy_reg          <= 1'b0;
                         serial_buff             <= 1'bZ;
                         timeout_counter         <= 4'b0;
                         temp_state_reg          <= 4'b0;
                         req_int_data            <= 1'b0;
+                        busy_out                <= 1'b0;
                     end
                 end
 
@@ -183,7 +182,7 @@ module slave #(
                                 state               <= BUSY_RD_FROM_MEM;
                                 data_dir_inv_s2p    <= 1'b1;
                                 req_int_data        <= 1'b1;
-                                slave_busy_reg      <= 1'b1;
+                                busy_out            <= 1'b0;
                             end
                         end
                     endcase
@@ -204,7 +203,7 @@ module slave #(
                             ack_counter         <= 1'b0;
                             serial_buff         <= 1'bZ;
                             write_en_internal   <= 1'b1;
-                            slave_busy_reg      <= 1'b1;
+                            busy_out            <= 1'b1;
                         end
                     end
                 end
@@ -214,13 +213,13 @@ module slave #(
                     serial_buff             <= 1'bZ;
                     if (module_dv) begin
                         state               <= TX_DATA_ACK;
-                        slave_busy_reg      <= 1'b0;   
+                        busy_out            <= 1'b0;   
                         ack_counter         <= 1'b0;
                     end
                 end
 
                 TX_DATA_ACK: begin
-                    if (slave_busy) begin
+                    if (arbiter_cmd_in) begin
                         serial_buff     <= 1'b0;   
                         ack_counter     <= 1'b1; 
                     end 
@@ -238,11 +237,11 @@ module slave #(
                     if (module_dv) begin
                         parallel_buff[ADDRESS_WIDTH - 1:ADDRESS_WIDTH-DATA_WIDTH]   <= data_in_parellel;
                         state           <= DATA_READY;
-                        slave_busy_reg  <= 1'b0;
+                        busy_out        <= 1'b0;
                     end
                 end
 
-                DATA_READY: if (slave_busy) begin
+                DATA_READY: if (arbiter_cmd_in) begin
                     state                   <= TX_DATA_TO_MS;
                     serial_tx_start         <= 1'b1;
                 end
@@ -255,20 +254,3 @@ module slave #(
         end
     end
 endmodule 
-
-/*
-force -freeze sim:/slave/clk 1 0, 0 {50 ps} -r 100
-force -freeze sim:/slave/rstn 0 0
-force -freeze sim:/slave/rd_wrt 0 0
-force -freeze sim:/slave/data_bus_serial 1 0
-force -freeze sim:/slave/bus_util 0 0
-force -freeze sim:/slave/module_dv 0 0
-force -freeze sim:/slave/data_in_parellel 0 0
-run
-force -freeze sim:/slave/rstn St1 0
-run
-force -freeze sim:/slave/bus_util St1 0
-force -freeze sim:/slave/data_bus_serial 0 0
-run
-force -freeze sim:/slave/bus_util St0 0
-run*/

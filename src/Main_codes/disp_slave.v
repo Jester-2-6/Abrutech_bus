@@ -2,10 +2,11 @@ module disp_slave(
     input clk, 
     input rstn, 
     input bus_util,
+    input arbiter_cmd_in,
 
-    inout data_bus_serial, 
-    inout slave_busy,
+    inout data_bus_serial,
 
+    output wire busy_out,
     output [6:0] dout0,
     output [6:0] dout1,
     output [6:0] dout2
@@ -35,7 +36,8 @@ slave #(
     .write_en_internal(update_disp),
     .data_out_parellel(data_out_parellel),
     .data_bus_serial(data_bus_serial), 
-    .slave_busy(slave_busy)
+    .arbiter_cmd_in(arbiter_cmd_in),
+    .busy_out(busy_out),
 );
 
 bi2bcd display(
