@@ -24,6 +24,8 @@ module slave #(
     output reg [DATA_WIDTH - 1:0] data_out_parellel = {DATA_WIDTH{1'b0}},
     output reg [ADDRESS_WIDTH -1:0] addr_buff       = {ADDRESS_WIDTH{1'b0}},
 
+    output wire [3:0] state_wire,
+
     inout data_bus_serial
 );
 
@@ -81,6 +83,9 @@ module slave #(
     // tristate buffers
     assign parallel_port_wire = data_dir_inv_s2p ? parallel_buff : {ADDRESS_WIDTH{1'bZ}};
     assign data_bus_serial = serial_buff;
+
+    //other assignments
+    assign state_wire = state;
 
     // main execution
     always @(posedge clk, negedge rstn) begin
