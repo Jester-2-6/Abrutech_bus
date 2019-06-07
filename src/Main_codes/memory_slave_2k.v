@@ -5,7 +5,7 @@ Date Modified: 01/06/2019
 Organization : ABruTECH
 Description  : Slave module with memory of the bus
 */
-module memory_slave_4k #(
+module memory_slave_2k #(
     parameter ADDRESS_WIDTH = 4'd15,
     parameter DATA_WIDTH    = 4'd8,
     parameter SELF_ID       = 3'd0
@@ -33,7 +33,7 @@ module memory_slave_4k #(
     reg module_dv   = 1'b0;
 
     reg [DATA_WIDTH - 1:0]      data_out_buff;
-    wire [ADDRESS_WIDTH -1:0]   addr_buff;
+    reg [ADDRESS_WIDTH -1:0]   addr_buff;
 
     slave #(
         .ADDRESS_WIDTH(ADDRESS_WIDTH),

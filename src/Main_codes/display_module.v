@@ -89,13 +89,13 @@ module display_module(
     ) slave_display(
         .clk(clk), 
         .rstn(rstn), 
-        .rd_wrt(1'b1), 
+        .rd_wrt(b_RW), 
         .bus_util(bus_util), 
         .module_dv(slave_dv),
         .data_in_parellel(display_buffer),
 
         .write_en_internal(update_disp),
-        .req_int_data(),
+        .req_int_data(req_int_data),  
         .data_out_parellel(data_out_parallel),
         .data_bus_serial(data_bus_serial), 
         .arbiter_cmd_in(arbiter_cmd_in),
@@ -122,15 +122,19 @@ module display_module(
             case(STATE)
                 IDLE:
                 begin
-                    slave_dv       <= 1'b0;
+                    // slave_dv       <= 1'b0;
                     timer          <= {TIMEOUT_LEN{1'b0}};
                     m_hold         <= 1'b0;
                     m_execute      <= 1'b0;
                     if(update_disp)
                     begin
+                        slave_dv       <= 1'b0;
                         STATE <= TIMEOUT;
                         display_buffer <= data_out_parallel;
+                    end else if(req_int_data) begin 
+                        slave_dv       <= 1'b1;
                     end else begin
+                        slave_dv       <= 1'b0;
                         STATE <= IDLE;
                     end   
                 end
