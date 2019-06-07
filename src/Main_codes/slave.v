@@ -311,7 +311,7 @@ module slave #(
                         data_out_parellel       <= {DATA_WIDTH{1'b0}};
                         timeout_counter         <= 4'b0;
                         temp_state_reg          <= 4'b0;
-                        slave_match_reg         <= slave_match_reg
+                        slave_match_reg         <= slave_match_reg;
                         serial_tx_start         <= 1'b0;
                         data_dir_inv_s2p        <= 1'b0;
                         ack_counter             <= 1'b0;
@@ -438,7 +438,7 @@ module slave #(
                     end else begin
                         parallel_buff       <= parallel_buff;
                         state               <= state;
-                        busy_out            <= busy_out 
+                        busy_out            <= busy_out;
                     end
                 end
 
