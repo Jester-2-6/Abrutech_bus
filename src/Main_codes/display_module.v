@@ -95,8 +95,8 @@ module display_module(
         .data_in_parellel(display_buffer),
 
         .write_en_internal(update_disp),
-        .req_int_data(req_int_data),  // slave asks to send data to bus. grant it using module_dv
-        .data_out_parellel(display_buffer),
+        .req_int_data(req_int_data),  
+        .data_out_parellel(data_out_parallel),
         .data_bus_serial(data_bus_serial), 
         .arbiter_cmd_in(arbiter_cmd_in),
         .busy_out(busy_out),

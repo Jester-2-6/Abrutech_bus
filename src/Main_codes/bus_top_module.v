@@ -566,6 +566,8 @@ bi2bcd master_data4(
 //-//    );
 //-//
 ///////////////////////// Muxes ///////////////////
+
+// To rout 3 digit SS Display to slave's/master's written data
 mux_21_8 multiplexer(
     .data0x({dout2_s0,dout1_s0,dout0_s0}), // Slave 0 output 000
     .data1x({dout2_s3,dout1_s3,dout0_s3}), // Slave 3 output 001
