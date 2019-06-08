@@ -43,10 +43,10 @@ module bus_top_module(
 wire [3:0] st;
 wire [3:0] st_ms2;
 wire [3:0] st3;
-wire [3:0] st4;
+wire [3:0] st_ms4;
 wire [3:0] st_slv3;
 bi2bcd test_2(  // Display Current master's slave
-    .din({4'b0,st_ms2}), // find a way to find its slave
+    .din({4'b0,st_ms4}), // find a way to find its slave
     .dout2(),
     .dout1(),
     .dout0(hex3)
@@ -68,7 +68,7 @@ localparam CLK_PERIOD   = 10; //10ns
 // localparam EXAMPLE_ADDR = 15'd27306;
 
 localparam MSTR2_ADDRS  = {3'd3,12'd5};
-localparam MSTR4_ADDRS  = {3'd3,12'd6};
+localparam MSTR4_ADDRS  = {3'd3,12'd5};
 localparam MSTR5_ADDRS  = {3'd4,12'd3};
 
 localparam MSTR2_DIN    = 8'd231;
@@ -280,7 +280,7 @@ master_4(
     .b_BUS(b_BUS),
     .b_request(b_request4),
     .b_RW(b_RW),
-    .state(st3),
+    .state(st_ms4),
     .b_bus_utilizing(b_bus_utilizing)
 );
 

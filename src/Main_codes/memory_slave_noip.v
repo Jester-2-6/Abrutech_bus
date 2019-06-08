@@ -33,8 +33,8 @@ module memory_slave_noip #(
 
     reg module_dv   = 1'b0;
 
-    reg [DATA_WIDTH - 1:0]      data_out_buff;
-    reg [ADDRESS_WIDTH -1:0]   addr_buff;
+    
+    // reg [ADDRESS_WIDTH -1:0]   addr_buff;
 
     slave #(
         .ADDRESS_WIDTH(ADDRESS_WIDTH),
@@ -49,7 +49,7 @@ module memory_slave_noip #(
         .data_bus_serial(data_bus_serial),
         .arbiter_cmd_in(arbiter_cmd_in),
         .busy_out(busy_out),
-        .data_in_parellel(data_out_buff),
+        .data_in_parellel(mem_to_slave_wire),
         .state_out(state),
 
         .write_en_internal(write_en_internal),
@@ -66,7 +66,7 @@ module memory_slave_noip #(
     );
 
     ram_noip ram_inst(
-        .address(addr_buff[ADDRESS_WIDTH-4:0]),
+        .address(addr_out_wire[ADDRESS_WIDTH-4:0]), //change if the memory size is changed
         .rstn(rstn),
         .clock(clk),
         .data_out(mem_to_slave_wire),
@@ -77,18 +77,179 @@ module memory_slave_noip #(
     always @(posedge clk, negedge rstn) begin
         if (~rstn) begin
             module_dv       <= 1'b0;
-            data_out_buff   <= {DATA_WIDTH{1'b0}};
-
         end else begin
-            if (req_int_data) begin
-                addr_buff       <= addr_out_wire;
-                module_dv       <= 1'b1;
-
-            end else if (write_en_internal) begin
-                data_out_buff   <= mem_to_slave_wire;
-                module_dv       <= 1'b1;
-            end else module_dv  <= 1'b0;
+            if (req_int_data|write_en_internal)  module_dv <= 1'b1;
+            else                                 module_dv <= 1'b0;
         end
     end
 
+
+
 endmodule
+
+
+/*
+force -freeze sim:/memory_slave_noip/clk 1 0, 0 {50000 ps} -r 100ns
+force -freeze sim:/memory_slave_noip/rstn 1 0
+force -freeze sim:/memory_slave_noip/rd_wrt 0 0
+force -freeze sim:/memory_slave_noip/bus_util 1 0
+force -freeze sim:/memory_slave_noip/arbiter_cmd_in 0 0
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0
+run 200ns
+force -freeze sim:/memory_slave_noip/rstn 0 0; run 300 ns
+force -freeze sim:/memory_slave_noip/rstn 1 0; run 300 ns
+force -freeze sim:/memory_slave_noip/rd_wrt 1 0
+force -freeze sim:/memory_slave_noip/bus_util 0 0
+run 300 ns
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 900ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 300ns;
+noforce sim:/memory_slave_noip/data_bus_serial
+run 100;
+run 100;
+run 100;
+run 100;
+run 100;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 100ns;
+noforce sim:/memory_slave_noip/bus_util
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+force -freeze sim:/memory_slave_noip/arbiter_cmd_in 1 0;run 100ns;
+force -freeze sim:/memory_slave_noip/bus_util 1 0
+noforce sim:/memory_slave_noip/data_bus_serial
+force -freeze sim:/memory_slave_noip/arbiter_cmd_in 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/bus_util 0 0
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+
+
+///read
+
+restart
+force -freeze sim:/memory_slave_noip/clk 1 0, 0 {50000 ps} -r 100ns
+force -freeze sim:/memory_slave_noip/rstn 1 0
+force -freeze sim:/memory_slave_noip/rd_wrt 0 0
+force -freeze sim:/memory_slave_noip/bus_util 1 0
+force -freeze sim:/memory_slave_noip/arbiter_cmd_in 0 0
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0
+run 200ns
+force -freeze sim:/memory_slave_noip/rstn 0 0; run 300 ns
+force -freeze sim:/memory_slave_noip/rstn 1 0; run 300 ns
+force -freeze sim:/memory_slave_noip/rd_wrt 1 0
+force -freeze sim:/memory_slave_noip/bus_util 0 0
+run 300 ns
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 900ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 300ns;
+noforce sim:/memory_slave_noip/data_bus_serial
+run 100;
+run 100;
+run 100;
+run 100;
+run 100;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 100ns;
+noforce sim:/memory_slave_noip/bus_util
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+force -freeze sim:/memory_slave_noip/arbiter_cmd_in 1 0;run 100ns;
+force -freeze sim:/memory_slave_noip/bus_util 1 0
+noforce sim:/memory_slave_noip/data_bus_serial
+force -freeze sim:/memory_slave_noip/arbiter_cmd_in 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/bus_util 0 0
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+force -freeze sim:/memory_slave_noip/rd_wrt 0 0
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 0 0;run 900ns;
+force -freeze sim:/memory_slave_noip/data_bus_serial 1 0;run 300ns;
+noforce sim:/memory_slave_noip/data_bus_serial
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+force -freeze sim:/memory_slave_noip/arbiter_cmd_in 1 0;run 100ns;
+force -freeze sim:/memory_slave_noip/arbiter_cmd_in 0 0;run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+*/

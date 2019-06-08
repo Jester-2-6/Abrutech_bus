@@ -116,7 +116,7 @@ module slave #(
                         read_width              <= {DATA_WIDTH{1'b0}};
                         parallel_buff           <= {ADDRESS_WIDTH{1'b0}};
                         data_out_parellel       <= {DATA_WIDTH{1'b0}};
-                        addr_buff               <= {ADDRESS_WIDTH{1'b0}};
+                        // addr_buff               <= {ADDRESS_WIDTH{1'b0}};
                         timeout_counter         <= 4'b0;
                         temp_state_reg          <= 4'b0;
                         slave_match_reg         <= 2'b0;
@@ -146,7 +146,7 @@ module slave #(
                         state                   <= IDLE;
                         parallel_buff           <= {ADDRESS_WIDTH{1'b0}};
                         data_out_parellel       <= {DATA_WIDTH{1'b0}};
-                        addr_buff               <= {ADDRESS_WIDTH{1'b0}};
+                        // addr_buff               <= {ADDRESS_WIDTH{1'b0}};
                         timeout_counter         <= 4'b0;
                         temp_state_reg          <= 4'b0;
                         slave_match_reg         <= 2'b0;
