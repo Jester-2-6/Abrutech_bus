@@ -64,12 +64,12 @@ localparam ADDRS_WIDTH  = 15;
 localparam TIMEOUT_LEN  = 6; //in bits 4 means 16 clocks
 localparam BIT_LENGTH   = 4; //size of bit_length port 4=> can
 localparam CLK_PERIOD   = 10; //10ns 
-localparam EXAMPLE_DATA = 8'd203;
-localparam EXAMPLE_ADDR = 15'd27306;
+// localparam EXAMPLE_DATA = 8'd203;
+// localparam EXAMPLE_ADDR = 15'd27306;
 
 localparam MSTR2_ADDRS  = {3'd4,12'd5};
 localparam MSTR4_ADDRS  = {3'd3,12'd6};
-localparam MSTR5_ADDRS  = {3'd4,12'd1500};
+localparam MSTR5_ADDRS  = {3'd4,12'd3};
 
 localparam MSTR2_DIN    = 8'd231;
 localparam MSTR4_DIN    = 8'd153;
@@ -333,7 +333,7 @@ master_4(
 
 
 // Slave011 -3
-memory_slave_4k #(
+memory_slave_noip #(
     .ADDRESS_WIDTH(ADDRS_WIDTH),
     .DATA_WIDTH(DATA_WIDTH),
     .SELF_ID(SLAVE3_ID)
@@ -357,26 +357,26 @@ slave_3
 
 
 // Slave100 -4
-memory_slave_4k #(
-    .ADDRESS_WIDTH(ADDRS_WIDTH),
-    .DATA_WIDTH(DATA_WIDTH),
-    .SELF_ID(SLAVE4_ID)
-    )
-slave_4
-(
-    .clk(clk), 
-    .rstn(deb_rstn),
-    .rd_wrt(b_RW),
-    .bus_util(b_bus_utilizing),
-
-    .disp_out2(dout2_s4), 
-    .disp_out1(dout1_s4), 
-    .disp_out0(dout0_s4),        
-
-    .data_bus_serial(b_BUS), 
-    .arbiter_cmd_in(arbiter2slave[4]),
-    .busy_out(slave2arbiter[4])
-);
+//-//memory_slave_4k #(
+//-//    .ADDRESS_WIDTH(ADDRS_WIDTH),
+//-//    .DATA_WIDTH(DATA_WIDTH),
+//-//    .SELF_ID(SLAVE4_ID)
+//-//    )
+//-//slave_4
+//-//(
+//-//    .clk(clk), 
+//-//    .rstn(deb_rstn),
+//-//    .rd_wrt(b_RW),
+//-//    .bus_util(b_bus_utilizing),
+//-//
+//-//    .disp_out2(dout2_s4), 
+//-//    .disp_out1(dout1_s4), 
+//-//    .disp_out0(dout0_s4),        
+//-//
+//-//    .data_bus_serial(b_BUS), 
+//-//    .arbiter_cmd_in(arbiter2slave[4]),
+//-//    .busy_out(slave2arbiter[4])
+//-//);
 
 
 //-//// Slave101 -5
@@ -603,7 +603,7 @@ mux_1_1 clk_multiplexer(
 
 // To mux the busy status of the current master
 mux_1_16 current_master_bsy_mux(
-    .data0(m_master_bsy0),    
+    .data0(1'b0),//-//m_master_bsy0),    
     .data1(1'b0),
     .data2(m_master_bsy2),
     .data3(1'b0),
@@ -638,11 +638,11 @@ assign slave2arbiter[0] =1'b0;
 assign slave2arbiter[1] =1'b0;
 assign slave2arbiter[2] =1'b0;
 // assign slave2arbiter[3] =1'b0;
-// assign slave2arbiter[4] =1'b0;
+assign slave2arbiter[4] =1'b0;
 assign slave2arbiter[5] =1'b0;
 
 // Connected masters
-assign m_reqs[0]  = b_request0 ;  // b_request0;    // Master0
+assign m_reqs[0]  = 1'b0       ;  // b_request0;    // Master0
 assign m_reqs[1]  = 1'b0       ;  // b_request1;    // Master1
 assign m_reqs[2]  = b_request2 ;  // b_request2;    // Master2
 assign m_reqs[3]  = 1'b0       ;  // b_request3;    // Master3
@@ -659,7 +659,7 @@ assign m_reqs[11] = 1'b0       ;  // b_request11;   // Master11
 
 assign slave_busy = slave2arbiter|arbiter2slave;
 assign current_m_bsy    = current_m_bsy_mux_out;
-assign {hex2,hex1,hex0} = mux_out;//{dout2_s0,dout1_s0,dout0_s0};//?{dout2,dout1,dout0}:{,,};
+assign {hex2,hex1,hex0} = mux_out;
 
 
 endmodule
