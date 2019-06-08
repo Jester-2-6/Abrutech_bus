@@ -40,11 +40,14 @@ module bus_top_module(
     master5_RW
 );
 //assign test = clk;
-wire [3:0] st;
+wire [3:0] st_arb;
+wire [3:0] st_ms0;
 wire [3:0] st_ms2;
 wire [3:0] st3;
 wire [3:0] st_ms4;
+wire [3:0] st_slv0;
 wire [3:0] st_slv3;
+wire [3:0] st_slv4;
 bi2bcd test_2(  // Display Current master's slave
     .din({4'b0,st_ms4}), // find a way to find its slave
     .dout2(),
@@ -67,7 +70,7 @@ localparam CLK_PERIOD   = 10; //10ns
 // localparam EXAMPLE_DATA = 8'd203;
 // localparam EXAMPLE_ADDR = 15'd27306;
 
-localparam MSTR2_ADDRS  = {3'd3,12'd5};
+localparam MSTR2_ADDRS  = {3'd4,12'd5};
 localparam MSTR4_ADDRS  = {3'd3,12'd5};
 localparam MSTR5_ADDRS  = {3'd4,12'd3};
 
@@ -182,9 +185,9 @@ wire [6:0] dout2_m4;
 //-//wire [6:0] dout2_m5;
 
 // Slave000 0   display slave
-//-//wire [6:0] dout2_s0;
-//-//wire [6:0] dout0_s0;
-//-//wire [6:0] dout1_s0;
+wire [6:0] dout2_s0;
+wire [6:0] dout0_s0;
+wire [6:0] dout1_s0;
 
 
 // Slave001 1   Interface slave0 (receive)
@@ -210,6 +213,8 @@ wire [6:0] dout2_s4;
 assign test = clk;
 
 //////////////////////////////////////////////
+
+
 ////////////////////////////// Instantiations //////////////////////////////
 
 /////// Bus controller
@@ -221,7 +226,7 @@ bus_controller Bus_Controller(
     .slaves_in(slave2arbiter),
     .slaves_out(arbiter2slave),
     .bus_util(b_bus_utilizing),
-    .state(st),//.state(state),
+    .state(st_arb),//.state(state),
     .mid_current(mid_current)
 );
 
@@ -314,24 +319,25 @@ master_4(
 /////////////////////////////// Slaves ////////////////////////////
 
 // Slave000 -0
-//-//display_module display_slave000(
-//-//    .clk(clk), 
-//-//    .rstn(deb_rstn),
-//-//    .b_grant(m_grants[0]), 
-//-//
-//-//    .bus_util(b_bus_utilizing),
-//-//    .data_bus_serial(b_BUS), 
-//-//    .b_RW(b_RW),
-//-//    .arbiter_cmd_in(arbiter2slave[0]),
-//-//    .busy_out(slave2arbiter[0]),
-//-//
-//-//    .m_master_bsy(m_master_bsy0),
-//-//    .b_request(b_request0),
-//-//    .dout0(dout0_s0),
-//-//    .dout1(dout1_s0),
-//-//    .dout2(dout2_s0),
-//-//    .state(st4)
-//-//);
+display_module display_slave000(
+    .clk(clk), 
+    .rstn(deb_rstn),
+    .b_grant(m_grants[0]), 
+
+    .bus_util(b_bus_utilizing),
+    .data_bus_serial(b_BUS), 
+    .b_RW(b_RW),
+    .arbiter_cmd_in(arbiter2slave[0]),
+    .mst_state(st_ms0),
+    .slv_state(st_slv0),
+    .busy_out(slave2arbiter[0]),
+
+    .m_master_bsy(m_master_bsy0),
+    .b_request(b_request0),
+    .dout0(dout0_s0),
+    .dout1(dout1_s0),
+    .dout2(dout2_s0)
+);
 //////////////////////////////////////////////////////////////////
 
 
@@ -360,26 +366,27 @@ slave_3
 
 
 // Slave100 -4
-//-//memory_slave_4k #(
-//-//    .ADDRESS_WIDTH(ADDRS_WIDTH),
-//-//    .DATA_WIDTH(DATA_WIDTH),
-//-//    .SELF_ID(SLAVE4_ID)
-//-//    )
-//-//slave_4
-//-//(
-//-//    .clk(clk), 
-//-//    .rstn(deb_rstn),
-//-//    .rd_wrt(b_RW),
-//-//    .bus_util(b_bus_utilizing),
-//-//
-//-//    .disp_out2(dout2_s4), 
-//-//    .disp_out1(dout1_s4), 
-//-//    .disp_out0(dout0_s4),        
-//-//
-//-//    .data_bus_serial(b_BUS), 
-//-//    .arbiter_cmd_in(arbiter2slave[4]),
-//-//    .busy_out(slave2arbiter[4])
-//-//);
+memory_slave_noip #(
+    .ADDRESS_WIDTH(ADDRS_WIDTH),
+    .DATA_WIDTH(DATA_WIDTH),
+    .SELF_ID(SLAVE4_ID)
+    )
+slave_4
+(
+    .clk(clk), 
+    .rstn(deb_rstn),
+    .rd_wrt(b_RW),
+    .bus_util(b_bus_utilizing),
+
+    .disp_out2(dout2_s4), 
+    .disp_out1(dout1_s4), 
+    .disp_out0(dout0_s4), 
+    .state(st_slv4),       
+
+    .data_bus_serial(b_BUS), 
+    .arbiter_cmd_in(arbiter2slave[4]),
+    .busy_out(slave2arbiter[4])
+);
 
 
 //-//// Slave101 -5
@@ -606,7 +613,7 @@ mux_1_1 clk_multiplexer(
 
 // To mux the busy status of the current master
 mux_1_16 current_master_bsy_mux(
-    .data0(1'b0),//-//m_master_bsy0),    
+    .data0(m_master_bsy0),//-//m_master_bsy0),    
     .data1(1'b0),
     .data2(m_master_bsy2),
     .data3(1'b0),
@@ -637,15 +644,15 @@ assign BUS              = b_BUS;
 
 // Assigning 0 to free ports .comment connected slaves
 
-assign slave2arbiter[0] =1'b0;
+// assign slave2arbiter[0] =1'b0;
 assign slave2arbiter[1] =1'b0;
 assign slave2arbiter[2] =1'b0;
 // assign slave2arbiter[3] =1'b0;
-assign slave2arbiter[4] =1'b0;
+// assign slave2arbiter[4] =1'b0;
 assign slave2arbiter[5] =1'b0;
 
 // Connected masters
-assign m_reqs[0]  = 1'b0       ;  // b_request0;    // Master0
+assign m_reqs[0]  = b_request0 ;  // b_request0;    // Master0
 assign m_reqs[1]  = 1'b0       ;  // b_request1;    // Master1
 assign m_reqs[2]  = b_request2 ;  // b_request2;    // Master2
 assign m_reqs[3]  = 1'b0       ;  // b_request3;    // Master3

@@ -16,22 +16,25 @@ module display_module(
     inout b_RW,
     input arbiter_cmd_in,
 
+    output [3:0] mst_state,
+    output [3:0] slv_state,
     output busy_out,
     output b_request,
     output m_master_bsy,
     output [6:0] dout0,
     output [6:0] dout1,
-    output [6:0] dout2,
-    output [3:0] state
+    output [6:0] dout2
 );
     // assign state = {2'b0,STATE};
 
-    localparam DATA_WIDTH   = 4'd8;
-    localparam ADDRS_WIDTH  = 4'd15;
-    localparam TIMEOUT_LEN  = 4'd6; //in bits 4 means 16 clocks
-    localparam BIT_LENGTH   = 4'd4; //size of bit_length port 4=> can
-    localparam SELF_ID      = 3'd0;
-    localparam INTERFACE1_ADD = {3'b011,12'b0};//{3'b010,12'b0};  // The data will be sent to this port
+
+    localparam DATA_WIDTH       = 4'd8;
+    localparam ADDRS_WIDTH      = 4'd15;
+    localparam TIMEOUT_LEN      = 4'd6;         //in bits 4 means 16 clocks
+    localparam TIMEOUT_RING_LEN = 4;//23;        // Bitwidth of timer before sending to other port
+    localparam BIT_LENGTH       = 4'd4;         //size of bit_length port 4=> can
+    localparam SELF_ID          = 3'd0;         // Display slave's ID
+    localparam INTERFACE1_ADD   = {3'd4,12'b0};//{3'b010,12'b0};  // The data will be sent to this port
 
     //STATES
     
@@ -39,14 +42,17 @@ module display_module(
     localparam TIMEOUT      = 2'd1;
     localparam SEND         = 2'd2;
     localparam WAIT_FOR_ACK = 2'd3;
-    reg [1:0] STATE         = IDLE;
+    reg [1:0]  STATE        = IDLE;
     
 
 
-    reg slave_dv        = 1'b0; 
+    reg slave_dv                        = 1'b0; 
     reg [DATA_WIDTH-1:0] display_buffer = {DATA_WIDTH{1'b0}};
-    reg [TIMEOUT_LEN-1:0] timer  = {TIMEOUT_LEN{1'b0}};
 
+    ///////////////////// Timout setting before sending to the other port /////////////////
+    reg [TIMEOUT_RING_LEN-1:0] timer  = {TIMEOUT_RING_LEN{1'b0}};
+    // reg [22:0] timer  = 23'b0;
+    //////////////////////////////////////////////////////////////////////////////////////
 
     reg m_hold    = 1'b0;
     reg m_execute = 1'b0;
@@ -73,7 +79,7 @@ module display_module(
         .m_execute(m_execute),
         .m_RW(1'b1),
         .m_address(INTERFACE1_ADD),
-        .m_din(8'd200),//display_buffer+1'b1),
+        .m_din(display_buffer),
         .m_dout(),
         .m_dvalid(m_dvalid),
         .m_master_bsy(m_master_bsy),
@@ -82,7 +88,7 @@ module display_module(
         .b_BUS(data_bus_serial),
         .b_request(b_request),
         .b_RW(b_RW),
-        .state(state),
+        .state(mst_state),
         .b_bus_utilizing(bus_util)
         
     );
@@ -100,6 +106,7 @@ module display_module(
         .data_in_parellel(display_buffer),
 
         .write_en_internal(update_disp),
+        .state_out(slv_state),
         .req_int_data(req_int_data),  
         .data_out_parellel(data_out_parallel),
         .data_bus_serial(data_bus_serial), 
@@ -115,44 +122,44 @@ module display_module(
         .dout0(dout0)
     );
 
-
     always@(posedge clk,negedge rstn)
     begin
         if (~rstn) begin
             slave_dv       <= 1'b0;
             display_buffer <= {DATA_WIDTH{1'b0}};
-            timer          <= {TIMEOUT_LEN{1'b0}};
+            timer          <= {TIMEOUT_RING_LEN{1'b0}};
+            m_hold         <= 1'b0;
+            m_execute      <= 1'b0;
             STATE          <= IDLE;
         end else begin
+            if(req_int_data|update_disp) slave_dv <= 1'b1;
+            else                         slave_dv <= 1'b0;
+            
+                
+            
             case(STATE)
                 IDLE:
                 begin
-                    // slave_dv       <= 1'b0;
-                    timer          <= {TIMEOUT_LEN{1'b0}};
+                    timer          <= {TIMEOUT_RING_LEN{1'b0}};
                     m_hold         <= 1'b0;
                     m_execute      <= 1'b0;
                     if(update_disp)
                     begin
-                        slave_dv       <= 1'b1;
                         STATE <= TIMEOUT;
-                        display_buffer <= data_out_parallel;
-                    end else if(req_int_data) begin 
-                        slave_dv       <= 1'b1;
+                        display_buffer <= data_out_parallel+1'b1;
                     end else begin
-                        slave_dv       <= 1'b0;
                         STATE <= IDLE;
                     end   
                 end
 
                 TIMEOUT:
                 begin
-                    slave_dv       <= 1'b0;
                     timer          <= timer +1'b1;
                     m_execute      <= 1'b0;
                     if (m_hold) begin
                         STATE  <= SEND;
                         m_hold <= 1'b1;
-                    end else if(timer == {TIMEOUT_LEN{1'b1}}) 
+                    end else if(timer == {TIMEOUT_RING_LEN{1'b1}}) 
                     begin
                         m_hold <= 1'b1;
                     end else begin
@@ -163,7 +170,7 @@ module display_module(
 
                 SEND:
                 begin
-                    slave_dv       <= 1'b0;
+                    timer          <= {TIMEOUT_RING_LEN{1'b0}};
                     m_hold         <= 1'b1;
                     if(~m_master_bsy)
                     begin
@@ -178,23 +185,187 @@ module display_module(
                 WAIT_FOR_ACK:
                 begin
                     m_execute      <= 1'b0;
-                    timer          <= {TIMEOUT_LEN{1'b0}};
+                    timer          <= {TIMEOUT_RING_LEN{1'b0}};
                     if(m_dvalid) 
                     begin
-                        m_hold <= 1'b0;
-                        slave_dv <= 1'b0;
-                        STATE <= IDLE;
+                        m_hold   <= 1'b0;
+                        STATE    <= IDLE;
                     end else begin
                         STATE <= WAIT_FOR_ACK;
-                        slave_dv       <= 1'b0; 
                         m_hold         <= 1'b1;
                     end
                 end
                 default: STATE <= IDLE;
             endcase
+
         end
     end
 
 
 
 endmodule
+
+/*
+add wave *
+force -freeze sim:/display_module/clk 1 0, 0 {50000 ps} -r 100ns
+force -freeze sim:/display_module/rstn 1 0
+force -freeze sim:/display_module/b_grant 0 0
+force -freeze sim:/display_module/arbiter_cmd_in 0 0
+run 300ns;
+force -freeze sim:/display_module/rstn 0 0;run 300ns;
+force -freeze sim:/display_module/rstn 1 0;run 300ns;
+force -freeze sim:/display_module/bus_util 0 0
+force -freeze sim:/display_module/b_RW 1 0
+run 300ns;
+force -freeze sim:/display_module/data_bus_serial 0 0
+force -freeze sim:/display_module/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/display_module/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/display_module/data_bus_serial 0 0;run 300ns;
+force -freeze sim:/display_module/data_bus_serial 0 0;run 1200ns;
+noforce sim:/display_module/data_bus_serial
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+
+run 100ns;
+force -freeze sim:/display_module/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/display_module/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/display_module/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/display_module/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/display_module/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/display_module/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/display_module/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/display_module/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/display_module/data_bus_serial 1 0;run 100ns;
+force -freeze sim:/display_module/data_bus_serial 1 0;run 100ns;
+noforce sim:/display_module/data_bus_serial
+run 100 ns;
+run 100 ns;
+run 100 ns;
+run 100 ns;
+run 100 ns;
+run 100 ns;
+force -freeze sim:/display_module/arbiter_cmd_in 1 0;run 100ns;
+force -freeze sim:/display_module/arbiter_cmd_in 0 0;run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+force -freeze sim:/display_module/b_grant 1 0
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+force -freeze sim:/display_module/data_bus_serial 0 0;run 200ns;
+noforce sim:/display_module/data_bus_serial
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+force -freeze sim:/display_module/data_bus_serial 0 0;run 100ns;
+force -freeze sim:/display_module/data_bus_serial 1 0;run 100ns;
+noforce sim:/display_module/data_bus_serial
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+100ns;
+run 100ns;
+noforce sim:/display_module/bus_util
+
+run 100ns;
+run 100ns;
+force -freeze sim:/display_module/bus_util 1 0
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+run 100ns;
+*/

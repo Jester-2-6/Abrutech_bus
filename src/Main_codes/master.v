@@ -129,7 +129,7 @@ begin
         // Reset the module
         m_dvalid          <= 1'b0;
         data_reg          <= {DATA_WIDTH{1'b0}};
-        m_master_bsy      <= 1'b0;
+        m_master_bsy      <= 1'b0; 
         b_request         <= 1'b0;
         RW_reg            <= 1'b0;
         address_reg       <= {ADDRS_WIDTH{1'b0}};
@@ -190,7 +190,7 @@ begin
                 begin
                     STATE <= BUS_GRANTED;
                     bus_util_reg   <= 1'b1;
-                    m_master_bsy   <= 1'b0;
+                    m_master_bsy   <= 1'b1;//// changed to 1 from 0 revise
                 end else begin 
                     STATE <= BUS_REQUESTED;
                     bus_util_reg   <= 1'b0;
@@ -251,7 +251,6 @@ begin
                     STATE          <= WAIT_BFRE_ADDRS_SEND;
                 end else begin
                     //data_reg        <= {DATA_WIDTH{1'b0}};
-                    m_master_bsy      <= 1'b0;
                     b_request         <= 1'b1;
                     bus_util_reg      <= 1'b1;
                     m_master_bsy      <= 1'b0;
@@ -462,7 +461,7 @@ begin
                 begin
                     data_reg        <= converter_parallel_line[ADDRS_WIDTH-1:ADDRS_WIDTH-DATA_WIDTH];
                     m_dvalid        <= 1'b1;   // Saying the module the task is done
-                    m_master_bsy    <= 1'b0;
+                    m_master_bsy    <= 1'b1; //changed revise
                     converter_rd_en <= 1'b0; 
                     STATE           <= BUS_GRANTED; 
                 end else begin
@@ -515,7 +514,7 @@ begin
                     begin
                         STATE <= BUS_GRANTED;
                         m_dvalid <= 1'b1;
-                        m_master_bsy      <= 1'b0;
+                        m_master_bsy      <= 1'b1; //changed revise
                     end else begin
                         STATE <= DATA_ACK_WAIT;
                         m_dvalid          <= 1'b0;
