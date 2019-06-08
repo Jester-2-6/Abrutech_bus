@@ -121,6 +121,9 @@ wire [DATA_WIDTH-1:0] m_dout2;
 wire m_dvalid2;
 wire m_master_bsy2;
 wire b_request2;
+wire [6:0] dout0_m2;
+wire [6:0] dout1_m2;
+wire [6:0] dout2_m2;
 
 // Master4
 wire deb_master4_hold;
@@ -131,6 +134,9 @@ wire [DATA_WIDTH-1:0] m_dout4;
 wire m_dvalid4;
 wire m_master_bsy4;
 wire b_request4;
+wire [6:0] dout0_m4;
+wire [6:0] dout1_m4;
+wire [6:0] dout2_m4;
 /// Master5
 //-//wire deb_master5_hold;
 //-//wire deb_master5_ex;
@@ -145,13 +151,23 @@ wire b_request4;
 //-//wire [6:0] dout2_m5;
 
 // Slave000 0   display slave
+wire [6:0] dout2_s0;
+wire [6:0] dout0_s0;
+wire [6:0] dout1_s0;
 
 
 // Slave001 1   Interface slave0 (receive)
 // Slave010 2   Interface slave1 (tranmit)
 
 // Slave011 3   
-
+wire [6:0] dout0_s3;
+wire [6:0] dout1_s3;
+wire [6:0] dout2_s3;
+//-//
+// Slave100 4
+wire [6:0] dout0_s4;
+wire [6:0] dout1_s4;
+wire [6:0] dout2_s4;
 
 //-//// Slave101 5
 //-//wire [6:0] dout0_s5;
@@ -164,6 +180,7 @@ assign test = clk;
 wire [3:0] st_arb;
 wire [3:0] st_ms0;
 wire [3:0] st_ms2;
+wire [3:0] st3;
 wire [3:0] st_ms4;
 wire [3:0] st_slv0;
 wire [3:0] st_slv3;
