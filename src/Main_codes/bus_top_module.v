@@ -71,7 +71,7 @@ localparam BIT_LENGTH   = 4; //size of bit_length port 4=> can
 
 localparam MSTR3_ADDRS  = {3'd4,12'd5};
 localparam MSTR4_ADDRS  = {3'd5,12'd5};
-localparam MSTR5_ADDRS  = {3'd4,12'd5};
+localparam MSTR5_ADDRS  = {3'd0,12'd5};
 
 localparam MSTR3_DIN    = 8'd231;
 localparam MSTR4_DIN    = 8'd153;
@@ -413,50 +413,6 @@ slave_5
     .busy_out(slave2arbiter[5])
 );
 
-//-//// Slave101 -5
-//-//memory_slave_2k #(
-//-//    .ADDRESS_WIDTH(ADDRS_WIDTH),
-//-//    .DATA_WIDTH(DATA_WIDTH),
-//-//    .SELF_ID(SLAVE5_ID)
-//-//    )
-//-//slave_5
-//-//(
-//-//    .clk(clk), 
-//-//    .rstn(deb_rstn),
-//-//    .rd_wrt(b_RW),
-//-//    .bus_util(b_bus_utilizing),
-//-//
-//-//    .disp_out2(dout2_s5), 
-//-//    .disp_out1(dout1_s5), 
-//-//    .disp_out0(dout0_s5),        
-//-//
-//-//    .data_bus_serial(b_BUS), 
-//-//    .slave_busy(slaves[5])
-//-//);
-
-// // Slave101 -3
-// slave #(
-//     .ADDRESS_WIDTH(ADDRS_WIDTH),
-//     .DATA_WIDTH(DATA_WIDTH),
-//     .SELF_ID(SLAVE3_ID)
-// )
-// slave_3
-// (
-//     .clk(clk), 
-//     .rstn(deb_rstn), 
-//     .rd_wrt(b_RW), 
-//     .bus_util(b_bus_utilizing), 
-//     .module_dv(sm_dv3),
-//     .data_in_parellel(sm_data3),
-
-//     .write_en_internal(sm_write_en_internal3), //make done bidirectional
-//     .req_int_data(sm_grant_data3),
-//     .data_out_parellel(sm_data_internal3),
-//     .addr_buff(sm_address3),
-
-//     .data_bus_serial(b_BUS), 
-//     .slave_busy(slaves[3])
-// );
 
 
 
