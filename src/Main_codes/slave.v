@@ -21,13 +21,13 @@ module slave #(
     output reg write_en_internal                    = 1'b0, //make done bidirectional
     output reg req_int_data                         = 1'b0,
     output reg busy_out                             = 1'b0,
+    output [3:0] state_out,
     output reg [DATA_WIDTH - 1:0] data_out_parellel = {DATA_WIDTH{1'b0}},
     output reg [ADDRESS_WIDTH -1:0] addr_buff       = {ADDRESS_WIDTH{1'b0}},
 
-    output wire [3:0] state_wire,
-
     inout data_bus_serial
 );
+
 
     localparam IDLE                = 4'd0 ;
     localparam MATCH_SID1          = 4'd1 ;
@@ -85,7 +85,7 @@ module slave #(
     assign data_bus_serial = serial_buff;
 
     //other assignments
-    assign state_wire = state;
+    assign state_out = state;
 
     // main execution
     always @(posedge clk, negedge rstn) begin

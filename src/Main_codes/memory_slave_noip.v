@@ -17,6 +17,7 @@ module memory_slave_noip #(
     input arbiter_cmd_in,
 
     output wire busy_out,
+    output [3:0] state,
     output wire [6:0] disp_out2, 
     output wire [6:0] disp_out1, 
     output wire [6:0] disp_out0,        
@@ -33,7 +34,7 @@ module memory_slave_noip #(
     reg module_dv   = 1'b0;
 
     reg [DATA_WIDTH - 1:0]      data_out_buff;
-    wire [ADDRESS_WIDTH -1:0]   addr_buff;
+    reg [ADDRESS_WIDTH -1:0]   addr_buff;
 
     slave #(
         .ADDRESS_WIDTH(ADDRESS_WIDTH),
@@ -49,6 +50,7 @@ module memory_slave_noip #(
         .arbiter_cmd_in(arbiter_cmd_in),
         .busy_out(busy_out),
         .data_in_parellel(data_out_buff),
+        .state_out(state),
 
         .write_en_internal(write_en_internal),
         .req_int_data(req_int_data),
@@ -65,10 +67,11 @@ module memory_slave_noip #(
 
     ram_noip ram_inst(
         .address(addr_buff[ADDRESS_WIDTH-4:0]),
+        .rstn(rstn),
         .clock(clk),
-        .data(data_out_parellel),
+        .data_out(data_out_parellel),
         .wren(write_en_internal),
-        .q(data_in_parellel)
+        .data_in(data_in_parellel)
     );
 
     always @(posedge clk, negedge rstn) begin

@@ -17,6 +17,7 @@ module memory_slave_4k #(
     input arbiter_cmd_in,
 
     output wire busy_out,
+    output [3:0] state,
     output wire [6:0] disp_out2, 
     output wire [6:0] disp_out1, 
     output wire [6:0] disp_out0,        
@@ -49,6 +50,7 @@ module memory_slave_4k #(
         .arbiter_cmd_in(arbiter_cmd_in),
         .busy_out(busy_out),
         .data_in_parellel(data_out_buff),
+        .state_out(state),
 
         .write_en_internal(write_en_internal),
         .req_int_data(req_int_data),

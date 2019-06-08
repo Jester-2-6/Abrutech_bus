@@ -1,8 +1,9 @@
 module ram_noip(
-    input [11:0] addr,
+    input [11:0] address,
     input [7:0] data_in,
-    input wrt_en,
-    input clk,
+    input wren,
+    input clock,
+    input rstn,
 
     output reg [7:0] data_out
 );
@@ -21,8 +22,13 @@ module ram_noip(
         8'b0, 
         8'b0};
 
-    always @(posedge clk) begin
-        if (wrt_en) mem_array[addr] <= data_in;
-        else data_out <= mem_array[addr];
+    always @(posedge clock,negedge rstn) begin
+        if (~rstn) begin
+            mem_array <= '{8'b0,8'b0,8'b0,8'b0,8'b0,8'b0,8'b0,8'b0,8'b0,8'b0,8'b0,8'b0};
+            data_out  <= 8'b0;
+        end else begin
+            if (wren) mem_array[address] <= data_in;
+            else data_out <= mem_array[address];
+        end
     end
-endmodule
+endmodule 
