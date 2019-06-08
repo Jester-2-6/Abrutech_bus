@@ -25,8 +25,8 @@ module memory_slave_noip #(
     inout data_bus_serial
 );
 
-    wire [DATA_WIDTH - 1:0]     data_in_parellel;
-    wire [DATA_WIDTH - 1:0]     data_out_parellel;
+    wire [DATA_WIDTH - 1:0]     slave_to_mem_wire;
+    wire [DATA_WIDTH - 1:0]     mem_to_slave_wire;
     wire [ADDRESS_WIDTH -1:0]   addr_out_wire;
     wire                        write_en_internal;
     wire                        req_int_data;
@@ -54,12 +54,12 @@ module memory_slave_noip #(
 
         .write_en_internal(write_en_internal),
         .req_int_data(req_int_data),
-        .data_out_parellel(data_out_parellel),
+        .data_out_parellel(slave_to_mem_wire),
         .addr_buff(addr_out_wire)
     );
 
     bi2bcd display(
-        .din(data_in_parellel),
+        .din(mem_to_slave_wire),
         .dout2(disp_out2),
         .dout1(disp_out1),
         .dout0(disp_out0)
@@ -69,9 +69,9 @@ module memory_slave_noip #(
         .address(addr_buff[ADDRESS_WIDTH-4:0]),
         .rstn(rstn),
         .clock(clk),
-        .data_out(data_out_parellel),
+        .data_out(mem_to_slave_wire),
         .wren(write_en_internal),
-        .data_in(data_in_parellel)
+        .data_in(slave_to_mem_wire)
     );
 
     always @(posedge clk, negedge rstn) begin
@@ -85,7 +85,7 @@ module memory_slave_noip #(
                 module_dv       <= 1'b1;
 
             end else if (write_en_internal) begin
-                data_out_buff   <= data_in_parellel;
+                data_out_buff   <= mem_to_slave_wire;
                 module_dv       <= 1'b1;
             end else module_dv  <= 1'b0;
         end
