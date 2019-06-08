@@ -6,7 +6,7 @@ Organization : ABruTECH
 Description  : Top module containig the arbiter,masters and slaves
 */
 
-module bus_top_module(
+module bus_top_module_simulating(
     rstn,
     in_clk,
     tx0,  //handle
@@ -121,9 +121,9 @@ output [5:0] slave_busy;
 // Common
 wire                    deb_rstn;
 wire                    clk;
-wire (strong0,weak1)    b_BUS;           // Pullup
-wire (weak0,strong1)    b_RW ;           // Pulldown
-wire (strong0,weak1)    b_bus_utilizing; // Pullup
+wire (strong0,weak1)    b_BUS = 1'b1;           // Pullup
+wire (weak0,strong1)    b_RW = 1'b0;           // Pulldown
+wire (strong0,weak1)    b_bus_utilizing = 1'b1; // Pullup
 wire                    _10MHz;
 wire                    _1Hz;
 wire [20:0]             mux_out;
@@ -533,15 +533,15 @@ pulse pulse2(
 //Convert 10MHz clock to 1Hz clock						
 						
 clock_divider _10MHz_to_1Hz(
-			.inclk(_10MHz),
+			.inclk(in_clk),/// change this wire to below output
 			.ena(1),
 			.clk(_1Hz));
 			
 //Convert 50MHz clock to 10MHz clock	
 			
-pll _50MHz_to_10MHz(
-	.inclk0(in_clk),
-.c0(_10MHz));
+// pll _50MHz_to_10MHz(
+// 	.inclk0(in_clk),
+// .c0(_10MHz));
 
 
 // SSDisplays

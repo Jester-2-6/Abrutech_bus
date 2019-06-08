@@ -25,11 +25,9 @@ module slave #(
     output reg [DATA_WIDTH - 1:0] data_out_parellel = {DATA_WIDTH{1'b0}},
     output reg [ADDRESS_WIDTH -1:0] addr_buff       = {ADDRESS_WIDTH{1'b0}},
 
-    output wire [3:0] state_wire,
-
     inout data_bus_serial
 );
-assign state_out = state;
+
 
     localparam IDLE                = 4'd0 ;
     localparam MATCH_SID1          = 4'd1 ;
@@ -87,7 +85,7 @@ assign state_out = state;
     assign data_bus_serial = serial_buff;
 
     //other assignments
-    assign state_wire = state;
+    assign state_out = state;
 
     // main execution
     always @(posedge clk, negedge rstn) begin
