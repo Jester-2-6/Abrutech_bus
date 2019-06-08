@@ -27,13 +27,13 @@ module bus_top_module(
     current_m_bsy,
     mux_switch,
     clk_mux,
-    master2_hold,
+    master3_hold,
     master4_hold,
     master5_hold,
-    master2_ex,
+    master3_ex,
     master4_ex,
     master5_ex,
-    master2_RW,
+    master3_RW,
     master4_RW,
     test,
     BUS,
@@ -42,9 +42,9 @@ module bus_top_module(
 //assign test = clk;
 wire [3:0] st_arb;
 wire [3:0] st_ms0;
-wire [3:0] st_ms2;
-wire [3:0] st3;
+wire [3:0] st_ms3;
 wire [3:0] st_ms4;
+wire [3:0] st_ms5;
 wire [3:0] st_slv0;
 wire [3:0] st_slv3;
 wire [3:0] st_slv4;
@@ -70,11 +70,11 @@ localparam CLK_PERIOD   = 10; //10ns
 // localparam EXAMPLE_DATA = 8'd203;
 // localparam EXAMPLE_ADDR = 15'd27306;
 
-localparam MSTR2_ADDRS  = {3'd4,12'd5};
+localparam MSTR3_ADDRS  = {3'd4,12'd5};
 localparam MSTR4_ADDRS  = {3'd3,12'd5};
 localparam MSTR5_ADDRS  = {3'd4,12'd3};
 
-localparam MSTR2_DIN    = 8'd231;
+localparam MSTR3_DIN    = 8'd231;
 localparam MSTR4_DIN    = 8'd153;
 localparam MSTR5_DIN    = 8'd29;
 
@@ -92,13 +92,13 @@ input rx0;
 input rx1;
 input [2:0] mux_switch; //SW17 SW16 SW15
 input clk_mux;
-input master2_hold;  // SW0
+input master3_hold;  // SW0
 input master4_hold;  // SW2
 input master5_hold;  // SW4
-input master2_ex;    // Key1
+input master3_ex;    // Key1
 input master4_ex;    // Key2
 input master5_ex;    // Key3
-input master2_RW;    // SW1
+input master3_RW;    // SW1
 input master4_RW;    // SW3
 input master5_RW;    // SW5
 
@@ -146,18 +146,18 @@ wire b_request0;
 wire m_master_bsy0;
 
 
-// Master2
-wire deb_master2_hold;
-wire deb_master2_ex;
-wire pul_master2_ex;
-wire deb_master2_RW;
-wire [DATA_WIDTH-1:0] m_dout2;
+// Master3
+wire deb_master3_hold;
+wire deb_master3_ex;
+wire pul_master3_ex;
+wire deb_master3_RW;
+wire [DATA_WIDTH-1:0] m_dout3;
 wire m_dvalid2;
-wire m_master_bsy2;
-wire b_request2;
-wire [6:0] dout0_m2;
-wire [6:0] dout1_m2;
-wire [6:0] dout2_m2;
+wire m_master_bsy3;
+wire b_request3;
+wire [6:0] dout0_m3;
+wire [6:0] dout1_m3;
+wire [6:0] dout2_m3;
 
 // Master4
 wire deb_master4_hold;
@@ -171,18 +171,19 @@ wire b_request4;
 wire [6:0] dout0_m4;
 wire [6:0] dout1_m4;
 wire [6:0] dout2_m4;
-/// Master5
-//-//wire deb_master5_hold;
-//-//wire deb_master5_ex;
-//-//wire pul_master5_ex;
-//-//wire deb_master5_RW;
-//-//wire [DATA_WIDTH-1:0] m_dout5;
-//-//wire m_dvalid5;
-//-//wire m_master_bsy5;
-//-//wire b_request5;
-//-//wire [6:0] dout0_m5;
-//-//wire [6:0] dout1_m5;
-//-//wire [6:0] dout2_m5;
+
+// Master5
+wire deb_master5_hold;
+wire deb_master5_ex;
+wire pul_master5_ex;
+wire deb_master5_RW;
+wire [DATA_WIDTH-1:0] m_dout5;
+wire m_dvalid5;
+wire m_master_bsy5;
+wire b_request5;
+wire [6:0] dout0_m5;
+wire [6:0] dout1_m5;
+wire [6:0] dout2_m5;
 
 // Slave000 0   display slave
 wire [6:0] dout2_s0;
@@ -233,31 +234,31 @@ bus_controller Bus_Controller(
 
 ////////////////////////////////// Masters ////////////////////////////////
 
-// Master2
+// Master3
 master #(
     .DATA_WIDTH(DATA_WIDTH),
     .ADDRS_WIDTH(ADDRS_WIDTH),
     .TIMEOUT_LEN(TIMEOUT_LEN), //in bits 4 means 16 clocks
     .BIT_LENGTH(BIT_LENGTH)
 )
-master_2(
+master_3(
     .clk(clk),
     .rstn(deb_rstn),
 
-    .m_hold(deb_master2_hold),
-    .m_execute(pul_master2_ex),
-    .m_RW(deb_master2_RW),
-    .m_address(MSTR2_ADDRS),
-    .m_din(MSTR2_DIN),
+    .m_hold(deb_master3_hold),
+    .m_execute(pul_master3_ex),
+    .m_RW(deb_master3_RW),
+    .m_address(MSTR3_ADDRS),
+    .m_din(MSTR3_DIN),
     .m_dout(m_dout2),
-    .m_dvalid(m_dvalid2),
-    .m_master_bsy(m_master_bsy2),
+    .m_dvalid(m_dvalid3),
+    .m_master_bsy(m_master_bsy3),
 
-    .b_grant(m_grants[2]),
+    .b_grant(m_grants[3]),
     .b_BUS(b_BUS),
-    .b_request(b_request2),
+    .b_request(b_request3),
     .b_RW(b_RW),
-    .state(st_ms2), //remove
+    .state(st_ms3), //remove
     .b_bus_utilizing(b_bus_utilizing)
 );
 
@@ -290,6 +291,32 @@ master_4(
 );
 
 //-//// Master5
+master #(
+    .DATA_WIDTH(DATA_WIDTH),
+    .ADDRS_WIDTH(ADDRS_WIDTH),
+    .TIMEOUT_LEN(TIMEOUT_LEN), //in bits 4 means 16 clocks
+    .BIT_LENGTH(BIT_LENGTH)
+)
+master_5(
+    .clk(clk),
+    .rstn(deb_rstn),
+
+    .m_hold(deb_master5_hold),
+    .m_execute(pul_master5_ex),
+    .m_RW(deb_master5_RW),
+    .m_address(MSTR5_ADDRS),
+    .m_din(MSTR5_DIN),
+    .m_dout(m_dout5),
+    .m_dvalid(m_dvalid5),
+    .m_master_bsy(m_master_bsy5),
+
+    .b_grant(m_grants[5]),
+    .b_BUS(b_BUS),
+    .b_request(b_request5),
+    .b_RW(b_RW),
+    .state(st_ms5),
+    .b_bus_utilizing(b_bus_utilizing)
+);
 //-//master #(
 //-//    .DATA_WIDTH(DATA_WIDTH),
 //-//    .ADDRS_WIDTH(ADDRS_WIDTH),
@@ -438,9 +465,9 @@ slave_4
 
 ///////////////////////// Debouncers /////////////////////////////
 debouncer debounce0(
-    .button_in(master2_hold),
+    .button_in(master3_hold),
     .clk(in_clk),
-    .button_out(deb_master2_hold));
+    .button_out(deb_master3_hold));
 
 debouncer debounce1(
     .button_in(master4_hold),
@@ -453,9 +480,9 @@ debouncer debounce2(
     .button_out(deb_master5_hold));
 
 debouncer debounce3(
-    .button_in(~master2_ex),
+    .button_in(~master3_ex),
     .clk(in_clk),
-    .button_out(deb_master2_ex));
+    .button_out(deb_master3_ex));
 
 
 debouncer debounce4(
@@ -469,9 +496,9 @@ debouncer debounce5(
     .button_out(deb_master5_ex));
 
 debouncer debounce6(
-    .button_in(master2_RW),
+    .button_in(master3_RW),
     .clk(in_clk),
-    .button_out(deb_master2_RW));
+    .button_out(deb_master3_RW));
 
 debouncer debounce7(
     .button_in(master4_RW),
@@ -501,8 +528,8 @@ debouncer debounce9(
 //////////////////////////// Pulses ////////////////////////////
 
 pulse pulse0(
-    .din(deb_master2_ex),
-    .dout(pul_master2_ex),
+    .din(deb_master3_ex),
+    .dout(pul_master3_ex),
     .clk(clk),
     .rstn(deb_rstn)
 );
@@ -567,11 +594,11 @@ bi2bcd ssd76(  // Display Current master
 //     );
 
 // master data decoding
-bi2bcd master_data2(  
-    .din(m_dout2), 
-    .dout2(dout2_m2),
-    .dout1(dout1_m2),
-    .dout0(dout0_m2)
+bi2bcd master_data3(  
+    .din(m_dout3), 
+    .dout2(dout2_m3),
+    .dout1(dout1_m3),
+    .dout0(dout0_m3)
     );
 
 bi2bcd master_data4(  
@@ -581,13 +608,13 @@ bi2bcd master_data4(
     .dout0(dout0_m4)
     );
 
-//-//bi2bcd master_data5(  
-//-//    .din(m_dout5), 
-//-//    .dout2(dout2_m5),
-//-//    .dout1(dout1_m5),
-//-//    .dout0(dout0_m5)
-//-//    );
-//-//
+bi2bcd master_data5(  
+    .din(m_dout5), 
+    .dout2(dout2_m5),
+    .dout1(dout1_m5),
+    .dout0(dout0_m5)
+    );
+
 ///////////////////////// Muxes ///////////////////
 
 // To rout 3 digit SS Display to slave's/master's written data
@@ -596,7 +623,7 @@ mux_21_8 multiplexer(
     .data1x({dout2_s3,dout1_s3,dout0_s3}), // Slave 3 output 001
     .data2x({dout2_s4,dout1_s4,dout0_s4}), // Slave 4 output 010
     .data3x({dout2_s5,dout1_s5,dout0_s5}), // Slave 5 output 011
-    .data4x({dout2_m2,dout1_m2,dout0_m2}), // Master 2 data  100
+    .data4x({dout2_m3,dout1_m3,dout0_m3}), // Master 3 data  100
     .data5x({dout2_m4,dout1_m4,dout0_m4}), // Master 4 data  101
     .data6x({dout2_m5,dout1_m5,dout0_m5}), // Master 5 data  110
     .data7x({dout2_s0,dout1_s0,dout0_s0}), // Slave 0 data   111
@@ -604,6 +631,8 @@ mux_21_8 multiplexer(
     .result(mux_out)
 );
 
+
+// To rout the clock between 1Hz and 10MHz
 mux_1_1 clk_multiplexer(
     .data0(_10MHz),
     .data1(_1Hz),
@@ -615,10 +644,10 @@ mux_1_1 clk_multiplexer(
 mux_1_16 current_master_bsy_mux(
     .data0(m_master_bsy0),//-//m_master_bsy0),    
     .data1(1'b0),
-    .data2(m_master_bsy2),
-    .data3(1'b0),
+    .data2(1'b0),
+    .data3(m_master_bsy3),
     .data4(m_master_bsy4),
-    .data5(1'b0),//-//m_master_bsy5),
+    .data5(m_master_bsy5),
     .data6(1'b0),
     .data7(1'b0),
     .data8(1'b0),
@@ -654,10 +683,10 @@ assign slave2arbiter[5] =1'b0;
 // Connected masters
 assign m_reqs[0]  = b_request0 ;  // b_request0;    // Master0
 assign m_reqs[1]  = 1'b0       ;  // b_request1;    // Master1
-assign m_reqs[2]  = b_request2 ;  // b_request2;    // Master2
-assign m_reqs[3]  = 1'b0       ;  // b_request3;    // Master3
+assign m_reqs[2]  = 1'b0       ;  // b_request3;    // Master2
+assign m_reqs[3]  = b_request3 ;  // b_request3;    // Master3
 assign m_reqs[4]  = b_request4 ;  // b_request4;    // Master4
-assign m_reqs[5]  = 1'b0       ;  // b_request5;    // Master5
+assign m_reqs[5]  = b_request5 ;  // b_request5;    // Master5
 assign m_reqs[6]  = 1'b0       ;  // b_request6;    // Master6
 assign m_reqs[7]  = 1'b0       ;  // b_request7;    // Master7
 assign m_reqs[8]  = 1'b0       ;  // b_request8;    // Master8

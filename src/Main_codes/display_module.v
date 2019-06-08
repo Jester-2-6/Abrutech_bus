@@ -34,7 +34,7 @@ module display_module(
     localparam TIMEOUT_RING_LEN = 4;//23;        // Bitwidth of timer before sending to other port
     localparam BIT_LENGTH       = 4'd4;         //size of bit_length port 4=> can
     localparam SELF_ID          = 3'd0;         // Display slave's ID
-    localparam INTERFACE1_ADD   = {3'd4,12'b0};//{3'b010,12'b0};  // The data will be sent to this port
+    localparam INTERFACE1_ADD   = {3'd1,12'b0};//{3'b010,12'b0};  // The data will be sent to this port
 
     //STATES
     
