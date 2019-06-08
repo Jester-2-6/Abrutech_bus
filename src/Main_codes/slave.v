@@ -25,6 +25,8 @@ module slave #(
     output reg [DATA_WIDTH - 1:0] data_out_parellel = {DATA_WIDTH{1'b0}},
     output reg [ADDRESS_WIDTH -1:0] addr_buff       = {ADDRESS_WIDTH{1'b0}},
 
+    output wire [3:0] state_wire,
+
     inout data_bus_serial
 );
 assign state_out = state;
@@ -84,19 +86,27 @@ assign state_out = state;
     assign parallel_port_wire = data_dir_inv_s2p ? parallel_buff : {ADDRESS_WIDTH{1'bZ}};
     assign data_bus_serial = serial_buff;
 
+    //other assignments
+    assign state_wire = state;
+
     // main execution
     always @(posedge clk, negedge rstn) begin
         if (rstn == 1'b0) begin
             //reset logic
+            read_width              <= {DATA_WIDTH{1'b0}};
             state                   <= IDLE;
-            parallel_buff           <= {DATA_WIDTH{1'b0}};
-            write_en_internal       <= 1'b0;
-            data_dir_inv_s2p        <= 1'b0;
-            addr_buff               <= {ADDRESS_WIDTH{1'b0}};
+            parallel_buff           <= {ADDRESS_WIDTH{1'b0}};
             data_out_parellel       <= {DATA_WIDTH{1'b0}};
-            serial_buff             <= 1'bZ;
+            addr_buff               <= {ADDRESS_WIDTH{1'b0}};
             timeout_counter         <= 4'b0;
             temp_state_reg          <= 4'b0;
+            slave_match_reg         <= 2'b0;
+            serial_rx_enable        <= 1'b0;
+            serial_tx_start         <= 1'b0;
+            data_dir_inv_s2p        <= 1'b0;
+            ack_counter             <= 1'b0;
+            serial_buff             <= 1'bZ;
+            write_en_internal       <= 1'b0;
             req_int_data            <= 1'b0;
             busy_out                <= 1'b0;
 
@@ -105,15 +115,49 @@ assign state_out = state;
                 IDLE: begin
                     if (~data_bus_serial) begin
                         state                   <= MATCH_SID1;
-                    end else begin
-                        parallel_buff           <= {DATA_WIDTH{1'b0}};
-                        write_en_internal       <= 1'b0;
-                        data_dir_inv_s2p        <= 1'b0;
-                        addr_buff               <= {ADDRESS_WIDTH{1'b0}};
+                        read_width              <= {DATA_WIDTH{1'b0}};
+                        parallel_buff           <= {ADDRESS_WIDTH{1'b0}};
                         data_out_parellel       <= {DATA_WIDTH{1'b0}};
-                        serial_buff             <= 1'bZ;
+                        addr_buff               <= {ADDRESS_WIDTH{1'b0}};
                         timeout_counter         <= 4'b0;
                         temp_state_reg          <= 4'b0;
+                        slave_match_reg         <= 2'b0;
+                        serial_rx_enable        <= 1'b0;
+                        serial_tx_start         <= 1'b0;
+                        data_dir_inv_s2p        <= 1'b0;
+                        ack_counter             <= 1'b0;
+                        serial_buff             <= 1'bZ;
+                        write_en_internal       <= 1'b0;
+                        req_int_data            <= 1'b0;
+                        busy_out                <= 1'b0;
+
+                    end else begin
+                        // parallel_buff           <= {DATA_WIDTH{1'b0}};
+                        // write_en_internal       <= 1'b0;
+                        // data_dir_inv_s2p        <= 1'b0;
+                        // addr_buff               <= {ADDRESS_WIDTH{1'b0}};
+                        // data_out_parellel       <= {DATA_WIDTH{1'b0}};
+                        // serial_buff             <= 1'bZ;
+                        // timeout_counter         <= 4'b0;
+                        // temp_state_reg          <= 4'b0;
+                        // req_int_data            <= 1'b0;
+                        // busy_out                <= 1'b0;
+
+                        //new reg list
+                        read_width              <= {DATA_WIDTH{1'b0}};
+                        state                   <= IDLE;
+                        parallel_buff           <= {ADDRESS_WIDTH{1'b0}};
+                        data_out_parellel       <= {DATA_WIDTH{1'b0}};
+                        addr_buff               <= {ADDRESS_WIDTH{1'b0}};
+                        timeout_counter         <= 4'b0;
+                        temp_state_reg          <= 4'b0;
+                        slave_match_reg         <= 2'b0;
+                        serial_rx_enable        <= 1'b0;
+                        serial_tx_start         <= 1'b0;
+                        data_dir_inv_s2p        <= 1'b0;
+                        ack_counter             <= 1'b0;
+                        serial_buff             <= 1'bZ;
+                        write_en_internal       <= 1'b0;
                         req_int_data            <= 1'b0;
                         busy_out                <= 1'b0;
                     end
@@ -125,45 +169,56 @@ assign state_out = state;
                         read_width          <= ADDRESS_WIDTH;
                         serial_rx_enable    <= 1'b1;
                         
-                    end else state <= WAIT_FOR_PEER;
+                    end else begin
+                        state <= WAIT_FOR_PEER;
+                        
+                    end
                 end
 
                 MATCH_SID2: begin
                     if (ack_counter == 1'b0) begin 
-                        slave_match_reg[1]  <= data_bus_serial;
-                        ack_counter         <= 1'b1;
+                        slave_match_reg[1]      <= data_bus_serial;
+                        ack_counter             <= 1'b1;
+                        
                     end else begin
-                        state               <= MATCH_SID3;
-                        ack_counter         <= 1'b0;
-                        slave_match_reg[0]  <= data_bus_serial;
+                        state                   <= MATCH_SID3;
+                        ack_counter             <= 1'b0;
+                        slave_match_reg[0]      <= data_bus_serial;
                     end
                 end
 
                 MATCH_SID3: begin
                     if ({slave_match_reg, data_bus_serial} == SELF_ID) begin
-                        state               <= ADDR_READ;
-                    end else state <= WAIT_FOR_PEER;
+                        state                   <= ADDR_READ;
+                    end else begin
+                        state                   <= WAIT_FOR_PEER;
+                    end
                 end
 
                 WAIT_FOR_PEER: begin
-                    if (bus_util) state <= IDLE;
+                    if (bus_util) begin
+                        state <= IDLE;
+                        
+                    end
                 end
 
                 ADDR_READ: begin
                     if (serial_dv) begin
-                        serial_rx_enable    <= 1'b0;
-                        read_width          <= DATA_WIDTH;
-                        addr_buff           <= parallel_port_wire;
-                        state               <= ADDR_ACK;
+                        serial_rx_enable        <= 1'b0;
+                        read_width              <= DATA_WIDTH;
+                        addr_buff               <= parallel_port_wire;
+                        state                   <= ADDR_ACK;
+                        
                     end
                 end
 
-                WAIT_TIMEOUT: begin
-                    timeout_counter     <= timeout_counter + 1'b1;
-
+                WAIT_TIMEOUT: begin   
                     if (timeout_counter[3]) begin
                         state <= temp_state_reg;
                         timeout_counter <= 4'b0;
+                    end else begin
+                        timeout_counter         <= timeout_counter + 1'b1;
+                        
                     end
                 end
 
@@ -172,20 +227,25 @@ assign state_out = state;
                         1'b0: begin
                             serial_buff  <= 1'b0;
                             ack_counter  <= 1'b1;
+        
                         end
 
                         1'b1: begin 
                             serial_buff  <= 1'b0;
                             ack_counter  <= 1'b0;
+                            
 
                             if (rd_wrt) begin
-                                state               <= RX_DATA_FROM_MS;
-                                ack_counter         <= 1'b1;
+                                state                   <= RX_DATA_FROM_MS;
+                                ack_counter             <= 1'b1;
+
+
                             end else begin
-                                state               <= BUSY_RD_FROM_MEM;
-                                data_dir_inv_s2p    <= 1'b1;
-                                req_int_data        <= 1'b1;
-                                busy_out            <= 1'b1;
+                                state                   <= BUSY_RD_FROM_MEM;
+                                data_dir_inv_s2p        <= 1'b1;
+                                req_int_data            <= 1'b1;
+                                busy_out                <= 1'b1;
+
                             end
                         end
                     endcase
@@ -194,68 +254,80 @@ assign state_out = state;
                 RX_DATA_FROM_MS: begin
                     if (serial_buff == 0) begin 
                         serial_buff <= 1'bZ;
+
                     end else begin
                         ack_counter <= data_bus_serial;
 
-                        if ({ack_counter, data_bus_serial} == 2'b01) serial_rx_enable <= 1'b1;
+                        if ({ack_counter, data_bus_serial} == 2'b01) begin
+                            serial_rx_enable <= 1'b1;
 
-                        if (serial_dv) begin
-                            serial_rx_enable    <= 1'b0;
-                            data_out_parellel   <= parallel_port_wire[ADDRESS_WIDTH - 1: ADDRESS_WIDTH - DATA_WIDTH];
-                            state               <= BUSY_WRT_TO_MEM;
-                            ack_counter         <= 1'b0;
-                            serial_buff         <= 1'bZ;
-                            write_en_internal   <= 1'b1;
-                            busy_out            <= 1'b1;
+                        end else if (serial_dv) begin
+                            serial_rx_enable        <= 1'b0;
+                            data_out_parellel       <= parallel_port_wire[ADDRESS_WIDTH - 1: ADDRESS_WIDTH - DATA_WIDTH];
+                            state                   <= BUSY_WRT_TO_MEM;
+                            ack_counter             <= 1'b0;
+                            serial_buff             <= 1'bZ;
+                            write_en_internal       <= 1'b1;
+                            busy_out                <= 1'b1;
+
                         end
                     end
                 end
 
                 BUSY_WRT_TO_MEM: begin
-                    write_en_internal       <= 1'b0;
-                    serial_buff             <= 1'bZ;
+                    write_en_internal           <= 1'b0;
+                    serial_buff                 <= 1'bZ;
                     if (module_dv) begin
-                        ack_counter         <= 1'b1;
-                        busy_out            <= 1'b0;   
-                    end
+                        ack_counter             <= 1'b1;
+                        busy_out                <= 1'b0;    
 
-                    if (ack_counter == 1'b1) begin
-                        if (arbiter_cmd_in) begin
-                            state               <= TX_DATA_ACK;
-                            ack_counter         <= 1'b0;
-                        end
+                    end else if ({ack_counter, arbiter_cmd_in} == 2'b11) begin
+                        state                   <= TX_DATA_ACK;
+                        ack_counter             <= 1'b0;
+
                     end
                 end
 
                 TX_DATA_ACK: begin
                     if (~ack_counter) begin
-                        serial_buff     <= 1'b0;   
-                        ack_counter     <= 1'b1; 
+                        serial_buff             <= 1'b0;   
+                        ack_counter             <= 1'b1; 
+
                     end else if (ack_counter) begin
-                        state           <= IDLE;
-                        serial_buff     <= 1'b1;   
-                        ack_counter     <= 1'b0; 
+                        state                   <= IDLE;
+                        serial_buff             <= 1'b1;   
+                        ack_counter             <= 1'b0; 
+
                     end
                 end
 
                 BUSY_RD_FROM_MEM: begin
-                    serial_buff     <= 1'bZ;
-                    req_int_data    <= 1'b0;
+                    serial_buff             <= 1'bZ;
+                    req_int_data            <= 1'b0;
+
+
                     if (module_dv) begin
                         parallel_buff[ADDRESS_WIDTH - 1:ADDRESS_WIDTH-DATA_WIDTH]   <= data_in_parellel;
-                        state           <= DATA_READY;
-                        busy_out        <= 1'b0;
+                        state               <= DATA_READY;
+                        busy_out            <= 1'b0;
+                    end else begin
+                        parallel_buff       <= parallel_buff;
+                        state               <= state;
+                        busy_out            <= busy_out;
                     end
                 end
 
                 DATA_READY: if (arbiter_cmd_in) begin
                     state                   <= TX_DATA_TO_MS;
                     serial_tx_start         <= 1'b1;
+
                 end
 
                 TX_DATA_TO_MS: begin
                     serial_tx_start <= 1'b0;
+
                     if (serial_tx_done) state <= IDLE;
+                    else state <= state;
                 end
             endcase
         end
