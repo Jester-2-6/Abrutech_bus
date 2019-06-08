@@ -13,20 +13,9 @@ module bus_top_module_simulating(
     rx0,  //handle
     tx1,  //handle
     rx1,  //handle
-    hex0,
-    hex1,
-    hex2,
-    hex3,
-    hex4,
-    hex5,
-    hex6,
-    hex7,
     requests,
     utilization,
     slave_busy,
-    current_m_bsy,
-    mux_switch,
-    clk_mux,
     master2_hold,
     master4_hold,
     master5_hold,
@@ -35,7 +24,6 @@ module bus_top_module_simulating(
     master5_ex,
     master2_RW,
     master4_RW,
-    test,
     BUS,
     master5_RW
 );
@@ -83,8 +71,7 @@ input in_clk;
 input rstn;          // Key0
 input rx0;
 input rx1;
-input [2:0] mux_switch; //SW17 SW16 SW15
-input clk_mux;
+
 input master2_hold;  // SW0
 input master4_hold;  // SW2
 input master5_hold;  // SW4
@@ -96,19 +83,9 @@ input master4_RW;    // SW3
 input master5_RW;    // SW5
 
 output BUS;
-output test;
 output tx0;
 output tx1;
-output [6:0] hex0;
-output [6:0] hex1;
-output [6:0] hex2;
-output [6:0] hex3;
-output [6:0] hex4;
-output [6:0] hex5;
-output [6:0] hex6;
-output [6:0] hex7;
 output [11:0] requests;
-output current_m_bsy;
 output utilization;
 output [5:0] slave_busy;
 
@@ -120,10 +97,6 @@ wire                    clk;
 wire (strong0,weak1)    b_BUS = 1'b1;           // Pullup
 wire (weak0,strong1)    b_RW =1'b0;           // Pulldown
 wire (strong0,weak1)    b_bus_utilizing=1'b1; // Pullup
-wire                    _10MHz;
-wire                    _1Hz;
-wire [20:0]             mux_out;
-wire                    current_m_bsy_mux_out;
 
 //Bus controller
 wire                  [11:0] m_reqs;
@@ -148,9 +121,6 @@ wire [DATA_WIDTH-1:0] m_dout2;
 wire m_dvalid2;
 wire m_master_bsy2;
 wire b_request2;
-wire [6:0] dout0_m2;
-wire [6:0] dout1_m2;
-wire [6:0] dout2_m2;
 
 // Master4
 wire deb_master4_hold;
@@ -161,9 +131,6 @@ wire [DATA_WIDTH-1:0] m_dout4;
 wire m_dvalid4;
 wire m_master_bsy4;
 wire b_request4;
-wire [6:0] dout0_m4;
-wire [6:0] dout1_m4;
-wire [6:0] dout2_m4;
 /// Master5
 //-//wire deb_master5_hold;
 //-//wire deb_master5_ex;
@@ -178,23 +145,13 @@ wire [6:0] dout2_m4;
 //-//wire [6:0] dout2_m5;
 
 // Slave000 0   display slave
-wire [6:0] dout2_s0;
-wire [6:0] dout0_s0;
-wire [6:0] dout1_s0;
 
 
 // Slave001 1   Interface slave0 (receive)
 // Slave010 2   Interface slave1 (tranmit)
 
 // Slave011 3   
-wire [6:0] dout0_s3;
-wire [6:0] dout1_s3;
-wire [6:0] dout2_s3;
-//-//
-// Slave100 4
-wire [6:0] dout0_s4;
-wire [6:0] dout1_s4;
-wire [6:0] dout2_s4;
+
 
 //-//// Slave101 5
 //-//wire [6:0] dout0_s5;
@@ -207,7 +164,6 @@ assign test = clk;
 wire [3:0] st_arb;
 wire [3:0] st_ms0;
 wire [3:0] st_ms2;
-wire [3:0] st3;
 wire [3:0] st_ms4;
 wire [3:0] st_slv0;
 wire [3:0] st_slv3;
