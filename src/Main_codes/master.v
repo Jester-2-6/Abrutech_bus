@@ -27,7 +27,7 @@ module master(
     b_bus_utilizing
 );
 output [3:0]state;
-assign state = STATE;
+
 
 // Parameters
 parameter DATA_WIDTH  = 8;
@@ -95,7 +95,7 @@ reg [ADDRS_WIDTH-1:0] conv_parallel_reg = {ADDRS_WIDTH{1'b0}}; // ADDRESS size r
 reg                   ack_buffer_reg    = 1'b1;                // To buffer incoming data to check for prefix
 
 
-
+assign state = STATE;
 // Instantiations
 serial_parallel_2way #(
     .PORT_WIDTH(ADDRS_WIDTH),                 // Parallel port width

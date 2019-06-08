@@ -18,17 +18,20 @@ module display_module(
 
     output busy_out,
     output b_request,
+    output m_master_bsy,
     output [6:0] dout0,
     output [6:0] dout1,
-    output [6:0] dout2
+    output [6:0] dout2,
+    output [3:0] state
 );
+    // assign state = {2'b0,STATE};
 
     localparam DATA_WIDTH   = 4'd8;
     localparam ADDRS_WIDTH  = 4'd15;
     localparam TIMEOUT_LEN  = 4'd6; //in bits 4 means 16 clocks
     localparam BIT_LENGTH   = 4'd4; //size of bit_length port 4=> can
     localparam SELF_ID      = 3'd0;
-    localparam INTERFACE1_ADD = {3'b010,12'b0};  // The data will be sent to this port
+    localparam INTERFACE1_ADD = {3'b011,12'b0};//{3'b010,12'b0};  // The data will be sent to this port
 
     //STATES
     
@@ -49,11 +52,11 @@ module display_module(
     reg m_execute = 1'b0;
 
     wire m_dvalid;
-    wire m_master_bsy;
+    // wire m_master_bsy;
 
 
     //Slave wires
-    wire data_out_parallel;
+    wire [7:0] data_out_parallel;
 
     // Master instantiation
     master #(
@@ -70,7 +73,7 @@ module display_module(
         .m_execute(m_execute),
         .m_RW(1'b1),
         .m_address(INTERFACE1_ADD),
-        .m_din(display_buffer+1'b1),
+        .m_din(8'd200),//display_buffer+1'b1),
         .m_dout(),
         .m_dvalid(m_dvalid),
         .m_master_bsy(m_master_bsy),
@@ -79,7 +82,9 @@ module display_module(
         .b_BUS(data_bus_serial),
         .b_request(b_request),
         .b_RW(b_RW),
+        .state(state),
         .b_bus_utilizing(bus_util)
+        
     );
 
     slave #(
@@ -128,7 +133,7 @@ module display_module(
                     m_execute      <= 1'b0;
                     if(update_disp)
                     begin
-                        slave_dv       <= 1'b0;
+                        slave_dv       <= 1'b1;
                         STATE <= TIMEOUT;
                         display_buffer <= data_out_parallel;
                     end else if(req_int_data) begin 
@@ -144,9 +149,11 @@ module display_module(
                     slave_dv       <= 1'b0;
                     timer          <= timer +1'b1;
                     m_execute      <= 1'b0;
-                    if(timer == {TIMEOUT_LEN{1'b1}}) 
-                    begin
+                    if (m_hold) begin
                         STATE  <= SEND;
+                        m_hold <= 1'b1;
+                    end else if(timer == {TIMEOUT_LEN{1'b1}}) 
+                    begin
                         m_hold <= 1'b1;
                     end else begin
                         STATE          <= TIMEOUT;
@@ -175,7 +182,7 @@ module display_module(
                     if(m_dvalid) 
                     begin
                         m_hold <= 1'b0;
-                        slave_dv <= 1'b1;
+                        slave_dv <= 1'b0;
                         STATE <= IDLE;
                     end else begin
                         STATE <= WAIT_FOR_ACK;
