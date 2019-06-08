@@ -123,6 +123,43 @@ initial begin
     data_bus_serial <= 1'bZ;
     bus_util        <= 1'b1;
 
+    #60
+    bus_util <= 1'b0;
+    data_bus_serial <= 0;
+
+    #10
+    data_bus_serial <= 1'b1;
+
+    #10
+    data_bus_serial <= 1;
+
+    #30
+    data_bus_serial <= 0;
+
+    #10
+    data_bus_serial <= 0;
+
+    #20
+    data_bus_serial <= 1;
+
+    #10
+    data_bus_serial <= 0;
+
+    #10
+    data_bus_serial <= 1'bZ;
+    bus_util <= 1'b1;
+
+    #40
+    module_dv = 1'b1;
+    
+    #10
+    module_dv = 1'b0;
+
+    #10
+    arbiter_cmd_in = 1'b1;
+
+    #10
+    arbiter_cmd_in = 1'b0;
 end
 
 endmodule
