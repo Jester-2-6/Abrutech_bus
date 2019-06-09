@@ -1,0 +1,105 @@
+# ARBITER OPERATION: SAME PRIORITY (P1)
+
+# ------ Bus is free
+# ------ M-0 requests
+# ------ M-0 accepts
+# ------ M-1 requests
+# ------ M-0 drops and done
+# ------ M-1 accepts
+# ------ M-0 drops and done
+# ------ Bus is free
+
+# ARBITER OPERATION: DIFFERENT PRIORITY (P1,P2)
+
+# ------ Bus is free
+# ------ M-4 requests
+# ------ M-4 accepts
+# ------ M-0 requests
+# ------ M-4 drops
+# ------ M-0 accepts
+# ------ M-0 drops and done
+# ------ M-4 accepts
+# ------ M-4 drops and done
+# ------ Bus is free
+
+# ARBITER OPERATION: MULTI PRIORITY (P1,P2x2,P3)
+
+# ------ Bus is free
+# ------ M-4 requests
+# ------ M-4 accepts
+# ------ M-5 requests
+# ------ M-8 requests
+# ------ M-0 requests
+# ------ M-4 drops
+# ------ M-0 accepts
+# ------ M-0 drops and done
+# ------ M-4 accepts
+# ------ M-4 drops and done
+# ------ M-5 accepts
+# ------ M-5 drops and done
+# ------ M-8 accepts
+# ------ M-8 drops and done
+# ------ Bus is free
+
+
+# SPLITTER OPERATION AMONG EQUAL PRIORITY (P1)
+
+# ------ Bus is free
+# ------ M-0 requests
+# ------ M-0 accepts
+# ------ M-1 requests
+# ------ S-5 gets busy with M-0
+# ------ M-0 drops
+# ------ M-1 accepts
+# ------ S-5 gets done with M-0
+# ------ M-1 drops
+# ------ M-0 accepts
+# ------ M-0 drops and done
+# ------ M-1 accepts
+# ------ M-1 drops and done
+# ------ Bus is free
+
+
+# SPLITTER OPERATION AMONG DIFFERENT PRIORITY (P1-P2)
+
+# ------ Bus is free
+# ------ M-0 requests
+# ------ M-0 accepts
+# ------ M-4 requests
+# ------ S-3 gets busy with M-0
+# ------ M-0 drops
+# ------ M-4 accepts
+# ------ S-3 gets done with M-0
+# ------ M-4 drops
+# ------ M-0 accepts
+# ------ M-0 drops and done
+# ------ M-4 accepts
+# ------ M-4 drops and done
+# ------ Bus is free
+
+
+# SPLITTER OPERATION: MULTIPLE SLAVES BUSY AMONG DIFFERENT PRIORITY (P1-P2x2)
+
+# ------ Bus is free
+# ------ M-0 requests
+# ------ M-0 accepts
+# ------ M-4 requests
+# ------ M-5 requests
+# ------ S-3 gets busy with M-0
+# ------ M-0 drops
+# ------ M-4 accepts
+# ------ S-2 gets busy with M-4
+# ------ M-4 drops
+# ------ M-5 accepts
+# ------ S-3 gets done with M-0
+# ------ M-5 drops
+# ------ M-0 accepts
+# ------ M-0 drops and done
+# ------ M-5 accepts
+# ------ S-2 gets done with M-4
+# ------ M-5 drops
+# ------ M-4 accepts
+# ------ M-4 drops and done
+# ------ M-5 accepts
+# ------ M-5 drops and done
+# ------ Bus is free
