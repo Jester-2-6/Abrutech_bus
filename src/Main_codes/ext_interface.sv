@@ -180,6 +180,8 @@ always @ (posedge clk, negedge rstn) begin
         s_in_dv         <= 1'b0;
         tx              <= 1; // TX is normally high
         baud_size       <= BAUD_SIZE;
+        buffer          <= 10'b0;
+        baud_size       <= BAUD_SIZE;
         count           <= 16'd1;
         count_0_9       <= 4'd10;
     end
@@ -201,6 +203,8 @@ always @ (posedge clk, negedge rstn) begin
                 tx              <= 1; // TX is normally high
                 baud_size       <= BAUD_SIZE;
                 buffer          <= 10'b0;
+                count           <= 16'd1;
+                count_0_9       <= 4'd10;
                 
                 if      (~rx) begin
                     baud_size   <= 16'd1;
@@ -265,8 +269,7 @@ always @ (posedge clk, negedge rstn) begin
             end
 
             RX_3_RECEIVE_3: begin                       // Recieving
-                if (count_0_9 == 4'd15) begin
-                    // buffer[count_0_9]<= rx;
+                if (count_0_9 == 4'd0) begin
                     count_0_9       <= 4'd1;
                     state           <= RX_4_ACK_1;
                 end
@@ -281,7 +284,7 @@ always @ (posedge clk, negedge rstn) begin
 
             RX_4_ACK_1: begin                       // Wait 1 baud
 
-                if (count_0_9 == 4'd13) begin
+                if (count_0_9 == 4'd0) begin
                     tx              <= 0;
                     m_din           <= buffer[7:0];
                     state           <= RX_4_ACK_2;
