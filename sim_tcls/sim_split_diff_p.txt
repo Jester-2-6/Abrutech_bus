@@ -18,13 +18,14 @@ force -freeze sim:/bus_controller/bus_util 0 0
 
 # ----- SPLITTER OPERATION AMONG DIFFERENT PRIORITY (P1-P2)
 # START
+force -freeze sim:/bus_controller/bus_util 1 0
 force -freeze sim:/bus_controller/m_reqs 000000000000 0
 run 50
 # ------ M-0 requests
 force -freeze sim:/bus_controller/m_reqs 000000000001 0
 run 100
 # ------ M-0 accepts
-force -freeze sim:/bus_controller/bus_util 1 0
+force -freeze sim:/bus_controller/bus_util 0 0
 run 100
 # ------ M-4 requests
 force -freeze sim:/bus_controller/m_reqs 000000010001 0
@@ -33,29 +34,29 @@ run 100
 force -freeze {sim:/bus_controller/slaves_in[3]} 1 0
 run 100
 # ------ M-0 drops
-force -freeze sim:/bus_controller/bus_util 0 0
+force -freeze sim:/bus_controller/bus_util 1 0
 run 100
 # ------ M-4 accepts
-force -freeze sim:/bus_controller/bus_util 1 0
+force -freeze sim:/bus_controller/bus_util 0 0
 run 100
 # ------ S-3 gets done with M-0
 force -freeze {sim:/bus_controller/slaves_in[3]} 0 0
 run 100
 # ------ M-4 drops
-force -freeze sim:/bus_controller/bus_util 0 0
+force -freeze sim:/bus_controller/bus_util 1 0
 run 100
 noforce {sim:/bus_controller/slaves_in[3]}
 # ------ M-0 accepts
-force -freeze sim:/bus_controller/bus_util 1 0
+force -freeze sim:/bus_controller/bus_util 0 0
 run 100
 # ------ M-0 drops
 force -freeze sim:/bus_controller/m_reqs 000000010000 0
-force -freeze sim:/bus_controller/bus_util 0 0
+force -freeze sim:/bus_controller/bus_util 1 0
 run 100
 # ------ M-4 accepts
-force -freeze sim:/bus_controller/bus_util 1 0
+force -freeze sim:/bus_controller/bus_util 0 0
 run 100
 # ------ M-4 drops
 force -freeze sim:/bus_controller/m_reqs 000000000000 0
-force -freeze sim:/bus_controller/bus_util 0 0
+force -freeze sim:/bus_controller/bus_util 1 0
 run 100
