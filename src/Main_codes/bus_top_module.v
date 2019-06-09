@@ -39,28 +39,39 @@ module bus_top_module(
     BUS,
     master5_RW
 );
-//assign test = clk;
+
+
+
 wire [3:0] st_arb;
 wire [3:0] st_ms0;
+wire [3:0] st_ms1;
+wire [3:0] st_ms2;
 wire [3:0] st_ms3;
 wire [3:0] st_ms4;
 wire [3:0] st_ms5;
 wire [3:0] st_slv0;
+wire [3:0] st_slv1;
+wire [3:0] st_slv2;
 wire [3:0] st_slv3;
 wire [3:0] st_slv4;
+wire [4:0] st_int0;
+wire [4:0] st_int1;
 bi2bcd test_2(  // Display Current master's slave
-    .din({4'b0,st_ms5}), // find a way to find its slave
+    .din({4'b0,st_ms0}), // find a way to find its slave
     .dout2(),
     .dout1(),
     .dout0(hex3)
     );
 
 bi2bcd ssd54(  // Display Current master's slave
-    .din({4'b0,st_slv4}), // find a way to find its slave
+    .din({3'b0,st_int1}), // find a way to find its slave
     .dout2(),
     .dout1(hex5),
     .dout0(hex4)
     );
+
+
+
 ///////////////////////////////// Parameters ///////////////////////////////
 localparam DATA_WIDTH   = 8;
 localparam ADDRS_WIDTH  = 15;
@@ -245,10 +256,10 @@ bus_controller Bus_Controller(
 // Interface 1  (Contains Master1 and Slave1)
 ext_interface #(
     .SLAVE_ID(SLAVE1_ID),// = 3'b001,
-    // .BAUD_SIZE(),//= 16'd8,
-    .AD_PREFIX()= 2'b00----------------------- whats this
-)
-interface0(
+    .BAUD_SIZE(16'd8),
+    .AD_PREFIX(2'b00)
+    )
+interface_receive(
     .clk(clk),
     .rstn(deb_rstn),
 
@@ -257,20 +268,25 @@ interface0(
     .bus(b_BUS),
 
     .b_util(b_bus_utilizing),
-    .slave_busy(),
+    .slv_state(st_slv1),
+    .mst_state(st_ms1),
+    .intrfc_state(st_int0),
+    .arbiter_cmd_in(arbiter2slave[1]),
+    .busy_out(slave2arbiter[1]),
+    .mst_busy(m_master_bsy1),
 
     .b_grant(m_grants[1]),
     .b_request(b_request1),
     .b_RW(b_RW)
 );
 
-// Interface 2  (Contains Master2 and Slave2)
+// Interface 2  (Contains Master2 and Slave12)
 ext_interface #(
-    .SLAVE_ID(SLAVE2_ID),// = 3'b001,
-    // .BAUD_SIZE(),//= 16'd8,
-    .AD_PREFIX()= 2'b00----------------------- whats this
-)
-interface1(
+    .SLAVE_ID(SLAVE2_ID),// = 3'b010,
+    .BAUD_SIZE(16'd8),
+    .AD_PREFIX(2'b00)
+    )  
+interface_Send(
     .clk(clk),
     .rstn(deb_rstn),
 
@@ -279,12 +295,18 @@ interface1(
     .bus(b_BUS),
 
     .b_util(b_bus_utilizing),
-    .slave_busy(),
+    .slv_state(st_slv2),
+    .mst_state(st_ms2),
+    .intrfc_state(st_int1),
+    .arbiter_cmd_in(arbiter2slave[2]),
+    .busy_out(slave2arbiter[2]),
+    .mst_busy(m_master_bsy2),
 
     .b_grant(m_grants[2]),
     .b_request(b_request2),
     .b_RW(b_RW)
 );
+
 
 ////////////// Masters ///////////////
 
