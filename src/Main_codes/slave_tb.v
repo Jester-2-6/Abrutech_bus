@@ -10,6 +10,7 @@ reg bus_util = 1'b1;
 reg module_dv = 1'b0; 
 reg data_bus_serial = 1'bZ; 
 reg arbiter_cmd_in = 1'b0;
+reg freeze_sw = 1'b0;
 reg [DATA_WIDTH - 1:0] data_in_parellel = {DATA_WIDTH{1'b0}};
 
 wire write_en_internal;
@@ -34,6 +35,7 @@ slave #(
     .data_bus_serial(serial_wire),
     .arbiter_cmd_in(arbiter_cmd_in),
     .data_in_parellel(data_in_parellel),
+    .freeze_sw(freeze_sw),
 
     .write_en_internal(write_en_internal),
     .data_out_parellel(data_out_parellel),
