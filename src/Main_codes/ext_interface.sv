@@ -39,7 +39,7 @@ localparam   PORT_WIDTH  = 10;
 localparam   BIT_LENGTH  = 4;
 localparam   TIMEOUT_LEN = 6;
 
-localparam   DISPLAY_ADDRESS = 15'd0;
+localparam   DISPLAY_ADDRESS = 15'b0;//{3'd3,12'd0};//15'd0;----------------------------------------------revert
 
 input       clk;
 input       rstn;

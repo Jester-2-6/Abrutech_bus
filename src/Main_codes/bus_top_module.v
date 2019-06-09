@@ -84,7 +84,7 @@ localparam MSTR5_ADDRS  = {3'd0,12'd5};
 
 localparam MSTR3_DIN    = 8'd231;
 localparam MSTR4_DIN    = 8'd153;
-localparam MSTR5_DIN    = 8'd29;
+localparam MSTR5_DIN    = 8'd3;
 
 localparam SLAVE1_ID    = 3'd1;
 localparam SLAVE2_ID    = 3'd2;
@@ -254,7 +254,7 @@ bus_controller Bus_Controller(
 // Interface 1  (Contains Master1 and Slave1)
 ext_interface #(
     .SLAVE_ID(SLAVE1_ID),// = 3'b001,
-    .BAUD_SIZE(16'd10240),
+    .BAUD_SIZE(16'd10000),
     .AD_PREFIX(2'b00)
     )
 interface_receive(
@@ -279,7 +279,7 @@ interface_receive(
 // Interface 2  (Contains Master2 and Slave12)
 ext_interface #(
     .SLAVE_ID(SLAVE2_ID),// = 3'b010,
-    .BAUD_SIZE(16'd10240),
+    .BAUD_SIZE(16'd10000),
     .AD_PREFIX(2'b00)
     )  
 interface_Send(
