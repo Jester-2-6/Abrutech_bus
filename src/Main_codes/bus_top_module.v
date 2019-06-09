@@ -54,17 +54,15 @@ wire [3:0] st_slv1;
 wire [3:0] st_slv2;
 wire [3:0] st_slv3;
 wire [3:0] st_slv4;
-wire [4:0] st_int0;
-wire [4:0] st_int1;
 bi2bcd test_2(  // Display Current master's slave
-    .din({4'b0,st_ms0}), // find a way to find its slave
+    .din({4'b0,st_ms1}), // find a way to find its slave
     .dout2(),
     .dout1(),
     .dout0(hex3)
     );
 
 bi2bcd ssd54(  // Display Current master's slave
-    .din({3'b0,st_int1}), // find a way to find its slave
+    .din({4'b0,st_slv2}), // find a way to find its slave
     .dout2(),
     .dout1(hex5),
     .dout0(hex4)
@@ -86,7 +84,7 @@ localparam MSTR5_ADDRS  = {3'd0,12'd5};
 
 localparam MSTR3_DIN    = 8'd231;
 localparam MSTR4_DIN    = 8'd153;
-localparam MSTR5_DIN    = 8'd29;
+localparam MSTR5_DIN    = 8'd3;
 
 localparam SLAVE1_ID    = 3'd1;
 localparam SLAVE2_ID    = 3'd2;
@@ -256,7 +254,7 @@ bus_controller Bus_Controller(
 // Interface 1  (Contains Master1 and Slave1)
 ext_interface #(
     .SLAVE_ID(SLAVE1_ID),// = 3'b001,
-    .BAUD_SIZE(16'd8),
+    .BAUD_SIZE(16'd10000),
     .AD_PREFIX(2'b00)
     )
 interface_receive(
@@ -270,7 +268,6 @@ interface_receive(
     .b_util(b_bus_utilizing),
     .slv_state(st_slv1),
     .mst_state(st_ms1),
-    .intrfc_state(st_int0),
     .arbiter_cmd_in(arbiter2slave[1]),
     .busy_out(slave2arbiter[1]),
     .mst_busy(m_master_bsy1),
@@ -279,11 +276,10 @@ interface_receive(
     .b_request(b_request1),
     .b_RW(b_RW)
 );
-
 // Interface 2  (Contains Master2 and Slave12)
 ext_interface #(
     .SLAVE_ID(SLAVE2_ID),// = 3'b010,
-    .BAUD_SIZE(16'd8),
+    .BAUD_SIZE(16'd10000),
     .AD_PREFIX(2'b00)
     )  
 interface_Send(
@@ -297,7 +293,6 @@ interface_Send(
     .b_util(b_bus_utilizing),
     .slv_state(st_slv2),
     .mst_state(st_ms2),
-    .intrfc_state(st_int1),
     .arbiter_cmd_in(arbiter2slave[2]),
     .busy_out(slave2arbiter[2]),
     .mst_busy(m_master_bsy2),

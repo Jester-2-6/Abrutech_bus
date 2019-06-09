@@ -741,39 +741,7 @@ endmodule
 
 
 
-/*
-force -freeze sim:/bus_top_module_simulating_v2/in_clk 1 0, 0 {50000 ps} -r 100ns
-force -freeze sim:/bus_top_module_simulating_v2/rstn 1 0
-force -freeze sim:/bus_top_module_simulating_v2/master3_RW 1 0
-force -freeze sim:/bus_top_module_simulating_v2/master4_RW 1 0
-force -freeze sim:/bus_top_module_simulating_v2/master5_RW 1 0
-force -freeze sim:/bus_top_module_simulating_v2/master3_hold 0 0
-force -freeze sim:/bus_top_module_simulating_v2/master4_hold 0 0
-force -freeze sim:/bus_top_module_simulating_v2/master5_hold 0 0
-force -freeze sim:/bus_top_module_simulating_v2/master3_ex 0 0
-force -freeze sim:/bus_top_module_simulating_v2/master4_ex 0 0
-force -freeze sim:/bus_top_module_simulating_v2/master5_ex 0 0
-run 300ns;
-force -freeze sim:/bus_top_module_simulating_v2/rstn 0 0;run 300ns
-force -freeze sim:/bus_top_module_simulating_v2/rstn 1 0;run 300ns
-force -freeze sim:/bus_top_module_simulating_v2/master3_hold 1 0
-run 100ns;
-run 100ns;
-run 100ns;
-run 100ns;
-run 100ns;
-run 100ns;
-run 100ns;
-force -freeze sim:/bus_top_module_simulating_v2/master3_ex 1 0
-run 100ns
-force -freeze sim:/bus_top_module_simulating_v2/master3_ex 0 0;run 100ns;
 
-run 2000ns;
-run 2000ns;
-run 2000ns;
-run 2000ns;
-run 2000ns;
-*/
 
 
 
