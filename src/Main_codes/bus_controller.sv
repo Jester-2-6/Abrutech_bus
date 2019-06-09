@@ -247,7 +247,7 @@ always @ (posedge clk, negedge rstn) begin
                 mid_grant <= MID_NONE;
                 
                 if (~bus_util) state <= FOUND;   // Wait until bus is free
-                else          state <= GRANT_1;
+                else           state <= GRANT_1;
             end
 
             GRANT_1: begin

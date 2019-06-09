@@ -18,6 +18,9 @@ module ext_interface #(
     rx,
     bus,
 
+    slv_state,
+    mst_state,
+
     b_util,
     slave_busy,
 
@@ -49,6 +52,9 @@ inout       slave_busy;
 input       b_grant;
 output      b_request;
 inout       b_RW;             // Usually pulldown
+output [3:0] slv_state;
+output [3:0] mst_state;
+
 
 reg                     mode        = RX_MODE;
 reg                     tx_control  = TX_MANUAL;
@@ -108,7 +114,7 @@ master(
 
     .m_hold(m_hold),
     .m_execute(m_execute),
-    .m_RW(0),
+    .m_RW(1),
     .m_address(DISPLAY_ADDRESS),
     .m_din(m_din),
     .m_dout(m_dout),
@@ -315,6 +321,7 @@ always @ (posedge clk, negedge rstn) begin
                 
                 baud_clk     <= ~baud_clk;
                 m_din        <= c_p_wire;   // copy data
+                m_hold       <= 1;
                 count        <= 16'd0;
                 state        <= RX_4_ACK_1;
             end
@@ -343,10 +350,9 @@ always @ (posedge clk, negedge rstn) begin
 
             M_WRITE_1   :   begin
 
-                if (m_busy)
+                if (~m_busy)
                     state   <=  M_WRITE_2;
                 else begin
-                    m_hold <= 1;
                     state   <=  M_WRITE_1;
                 end
             end
