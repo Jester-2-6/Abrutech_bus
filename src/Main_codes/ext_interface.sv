@@ -284,6 +284,7 @@ always @ (posedge clk, negedge rstn) begin
                 if (count_0_9 == 4'd13) begin
                     tx              <= 0;
                     m_din           <= buffer[7:0];
+                    m_hold          <= 1;
                     state           <= RX_4_ACK_2;
                 end
                 else

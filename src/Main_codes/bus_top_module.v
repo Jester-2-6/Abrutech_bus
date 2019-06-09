@@ -254,7 +254,7 @@ bus_controller Bus_Controller(
 // Interface 1  (Contains Master1 and Slave1)
 ext_interface #(
     .SLAVE_ID(SLAVE1_ID),// = 3'b001,
-    .BAUD_SIZE(16'd8),
+    .BAUD_SIZE(16'd10240),
     .AD_PREFIX(2'b00)
     )
 interface_receive(
@@ -279,7 +279,7 @@ interface_receive(
 // Interface 2  (Contains Master2 and Slave12)
 ext_interface #(
     .SLAVE_ID(SLAVE2_ID),// = 3'b010,
-    .BAUD_SIZE(16'd8),
+    .BAUD_SIZE(16'd10240),
     .AD_PREFIX(2'b00)
     )  
 interface_Send(
