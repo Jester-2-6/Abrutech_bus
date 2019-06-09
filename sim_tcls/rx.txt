@@ -3,7 +3,7 @@ vlog -work work U:/aba/Desktop_Win/Abrutech_bus/src/Main_codes/ext_interface.sv
 restart
 force -freeze sim:/ext_interface/clk 1 0, 0 {5 ps} -r 10
 run 100
-#------------ FIRST RX [0000-0000]
+#------------ FIRST RX [1111-1110]
 force -freeze sim:/ext_interface/rx 0 0
 run 80
 force -freeze sim:/ext_interface/rx 1 0
@@ -11,8 +11,10 @@ run 200
 force -freeze sim:/ext_interface/rx 0 0
 run 240
 #-- rx data starts
+force -freeze sim:/ext_interface/rx 1 0
+run 560
 force -freeze sim:/ext_interface/rx 0 0
-run 640
+run 80
 force -freeze sim:/ext_interface/rx 1 0
 #-- rx data done
 run 400
@@ -23,12 +25,16 @@ run 10
 force -freeze sim:/ext_interface/m_dvalid 0 0
 run 200
 #------------ SECOND RX [0011-0011]
+# Baud bit
 force -freeze sim:/ext_interface/rx 0 0
 run 80
 force -freeze sim:/ext_interface/rx 1 0
 run 200
-force -freeze sim:/ext_interface/rx 0 0
+# Start bit + addr bit
+force -freeze sim:/ext_interface/rx 1 0
 run 240
+force -freeze sim:/ext_interface/rx 0 0
+run 80
 #-- rx data starts
 force -freeze sim:/ext_interface/rx 0 0
 run 160

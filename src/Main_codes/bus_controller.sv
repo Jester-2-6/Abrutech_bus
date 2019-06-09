@@ -243,24 +243,52 @@ always @ (posedge clk, negedge rstn) begin
                 state           <= FOUND;
             end
 
+            // FOUND: begin
+            //     mid_grant <= MID_NONE;
+                
+            //     if (~bus_util) state <= FOUND;   // Wait until bus is free
+            //     else           state <= GRANT_1;
+            // end
+
+            // GRANT_1: begin
+            //     mid_current <= mid_search;
+            //     mid_grant   <= mid_search;
+            //     mid_search  <= MID_NONE;
+
+            //     state <= GRANT_2;
+            // end
+
+            // GRANT_2: begin
+            //     if      (bus_util)          state <= GRANT_2;  // wait until master picks up the bus
+            //     else if (switch_to_slave)   state <= ACK_SLAVE_1;
+            //     else                        state <= IDLE;
+            // end
+
             FOUND: begin
                 mid_grant <= MID_NONE;
                 
-                if (~bus_util) state <= FOUND;   // Wait until bus is free
-                else           state <= GRANT_1;
+                if (~bus_util)                  // Wait until bus is free
+                               state <= FOUND;   
+                else  begin
+                                mid_current <= MID_NONE;
+                                state <= GRANT_1;
+                end
             end
 
             GRANT_1: begin
-                mid_current <= mid_search;
-                mid_grant   <= mid_search;
-                mid_search  <= MID_NONE;
-
-                state <= GRANT_2;
+                if (bus_util)   begin           // Wait until master picks the bus
+                                mid_grant   <= mid_search;
+                                state       <= GRANT_1;
+                end
+                else begin
+                                mid_current <= mid_search;
+                                mid_search  <= MID_NONE;
+                                state       <= GRANT_2; 
+                end
             end
 
             GRANT_2: begin
-                if      (bus_util)          state <= GRANT_2;  // wait until master picks up the bus
-                else if (switch_to_slave)   state <= ACK_SLAVE_1;
+                if (switch_to_slave)        state <= ACK_SLAVE_1;
                 else                        state <= IDLE;
             end
 
