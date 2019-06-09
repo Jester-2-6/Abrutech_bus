@@ -10,8 +10,8 @@ module top(
     boun_b_grant,
     m_master_bsy,
     boun_sm_dv,
-	 slv_bsy
-
+    slv_bsy,
+    test_led
 
 
 );
@@ -29,6 +29,7 @@ input boun_b_grant;
 output m_master_bsy;
 input boun_sm_dv;
 output slv_bsy;
+output test_led;
 
 //clk_1hz clk_cnvrt(
 //    .clk_in(clk_high), 
@@ -36,7 +37,6 @@ output slv_bsy;
 //    .clk_1hz_out(clk)
 //);
 assign clk = clk_high;
-
 
 debouncer db0(
     .button_in(boun_rstn),
@@ -99,7 +99,7 @@ wire                       m_master_bsy;
 wire     [DATA_WIDTH-1:0]  m_dout;
 // BUS side
 wire    (strong0,weak1)    b_BUS           ;  
-wire                       b_request;
+wire                       b_request       ;
 wire    (weak0,strong1)    b_RW            ;  // Usually pulldown
 wire    (weak0,strong1)    b_bus_utilizing ;  // Usually pulldown
 
@@ -112,7 +112,8 @@ wire [DATA_WIDTH-1:0]    sm_data_internal;
 wire [ADDRS_WIDTH-1:0]   sm_address;
 wire                     sm_grant_data;
 // BUS side
-wire   (weak0,strong1)   slv_bsy ;
+wire   slv_bsy ;
+pullup(slv_bsy);
 
 // ARBITER
 reg                      arbiter_drive = 1'b0;
@@ -122,6 +123,7 @@ reg                      arb_out       = 1'b1;
 
 // General conditions
 assign slv_bsy = arbiter_drive?arb_out:1'bZ;
+assign test_led = (b_BUS == 1'bZ) ? 1'b1 : 1'b0;
 
 // DUT instantiation
 
@@ -193,7 +195,6 @@ slave_0
     .disp_out0(ss0),
 
     .data_bus_serial(b_BUS), 
-    .slave_busy(slv_bsy)
 );
 
 

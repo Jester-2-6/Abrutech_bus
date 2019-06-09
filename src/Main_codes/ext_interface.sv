@@ -20,15 +20,19 @@ module ext_interface #(
 
     slv_state,
     mst_state,
+    intrfc_state,
+    arbiter_cmd_in,
+    busy_out,
+    mst_busy,
+    
 
     b_util,
-    slave_busy,
 
     b_grant,
     b_request,
     b_RW
 );
-localparam   PACKET_WIDTH= 10;
+localparam   PACKET_WIDTH= 4'd10;
 localparam   DATA_WIDTH  = 8;
 localparam   ADDRS_WIDTH = 15;
 localparam   PORT_WIDTH  = 10;
@@ -48,12 +52,15 @@ output      tx;
 input       rx;
 inout       bus;
 inout       b_util;
-inout       slave_busy;
 input       b_grant;
 output      b_request;
 inout       b_RW;             // Usually pulldown
+input       arbiter_cmd_in;
+output      busy_out;
 output [3:0] slv_state;
 output [3:0] mst_state;
+output [4:0] intrfc_state;
+output       mst_busy;
 
 
 reg                     mode        = RX_MODE;
@@ -68,10 +75,10 @@ wire                    m_dvalid;
 wire                    m_busy;
 
 wire                    s_read_req;
-wire                    s_out_addr;
+wire [ADDRS_WIDTH-1:0]  s_out_addr;
 wire                    s_out_dv;
 wire [DATA_WIDTH - 1:0] s_out_data;
-reg                     s_in_dv     = 1;
+reg                     s_in_dv     = 1'b0;
 reg [DATA_WIDTH-1:0]    s_in_data   = 0;
 
 reg                     c_rst_reg   = 0;
@@ -99,7 +106,8 @@ assign tx               =  tx_control   ? c_s_wire  : tx_manual_reg;
 assign c_rst_wire       =  c_rst_reg    ? 0         : rstn;
 
 assign half_baud_size   = {1'b0, baud_size[15:1]};
-
+assign mst_busy         = m_busy;
+assign intrfc_state     = state;
 
 // Master instantiation
 master #(
@@ -114,7 +122,7 @@ master(
 
     .m_hold(m_hold),
     .m_execute(m_execute),
-    .m_RW(1),
+    .m_RW(1'b1),
     .m_address(DISPLAY_ADDRESS),
     .m_din(m_din),
     .m_dout(m_dout),
@@ -125,6 +133,7 @@ master(
     .b_BUS(bus),
     .b_request(b_request),
     .b_RW(b_RW),
+    .state(mst_state), 
     .b_bus_utilizing(b_util)
 );
 
@@ -148,7 +157,9 @@ slave
     .addr_buff(s_out_addr),
 
     .data_bus_serial(bus), 
-    .slave_busy(slave_busy)
+    .arbiter_cmd_in(arbiter_cmd_in),
+    .busy_out(busy_out),
+    .state_out(slv_state)
 );
 
 serial_parallel_2way#(
@@ -211,7 +222,7 @@ always @ (posedge clk, negedge rstn) begin
         m_hold          <= 0;
         m_execute       <= 0;
         m_din           <= 0;
-        s_in_dv         <= 1;
+        s_in_dv         <= 1'b0;
         c_in_dv         <= 0;
         c_en_s2p        <= 0;
         tx_manual_reg   <= 1; // TX is normally high
@@ -228,7 +239,7 @@ always @ (posedge clk, negedge rstn) begin
                 m_hold          <= 0;
                 m_execute       <= 0;
                 m_din           <= 0;
-                s_in_dv         <= 1;
+                s_in_dv         <= 1'b0;
                 c_in_dv         <= 0;
                 c_en_s2p        <= 0;
                 tx_manual_reg   <= 1; // TX is normally high
@@ -498,29 +509,29 @@ always @ (posedge clk, negedge rstn) begin
                     baud_clk      <= ~baud_clk;
                     tx_manual_reg <= 1;
                     tx_control    <= TX_CONVERTER;
-                    state         <= TX_4_TRANSMIT_8;
+                    state         <= TX_4_TRANSMIT_9;
                 end
                 else begin
                     count         <= count + 16'd1;
                 end
             end                                     // start bit done
-            TX_4_TRANSMIT_8:  begin                 // wait for dv to go high
-                if (count_20 == 16'd20) begin
-                    count_20      <= 16'd0;
-                    state         <= TX_4_TRANSMIT_9;
-                end
-                else
-                    state         <= TX_4_TRANSMIT_8;
+            // TX_4_TRANSMIT_8:  begin                 // wait for dv to go high
+            //     if (count_20 == 16'd20) begin
+            //         count_20      <= 16'd0;
+            //         state         <= TX_4_TRANSMIT_9;
+            //     end
+            //     else
+            //         state         <= TX_4_TRANSMIT_8;
 
-                if (count == half_baud_size) begin
-                    count         <= 0;
-                    count_20      <= count_20 + 16'd1;
-                    baud_clk      <= ~baud_clk;
-                end
-                else begin
-                    count         <= count + 16'd1;
-                end
-            end
+            //     if (count == half_baud_size) begin
+            //         count         <= 0;
+            //         count_20      <= count_20 + 16'd1;
+            //         baud_clk      <= ~baud_clk;
+            //     end
+            //     else begin
+            //         count         <= count + 16'd1;
+            //     end
+            // end
             TX_4_TRANSMIT_9:  begin
                 c_rst_reg     <= 1;    
                 baud_clk      <= ~baud_clk;
@@ -536,7 +547,6 @@ always @ (posedge clk, negedge rstn) begin
                 c_rst_reg     <= 0;
                 baud_clk      <= ~baud_clk;
                 if (~rx) begin
-                    s_in_dv <= 0;
                     state <= TX_5_ACK_2;
                 end
                 else
@@ -546,7 +556,7 @@ always @ (posedge clk, negedge rstn) begin
             TX_5_ACK_2  :   begin           // Ack ends
                 baud_clk      <= ~baud_clk;
                 if (rx) begin
-                    s_in_dv <= 1;
+                    s_in_dv <= 1'b1;
                     state   <= TX_5_ACK_3;
                 end
                 else
@@ -555,6 +565,7 @@ always @ (posedge clk, negedge rstn) begin
 
             TX_5_ACK_3  :   begin           // Ack ends
                 baud_clk    <= 0;
+                s_in_dv     <= 1'b0;
                 state       <= IDLE;
             end
 

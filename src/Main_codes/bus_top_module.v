@@ -27,41 +27,69 @@ module bus_top_module(
     current_m_bsy,
     mux_switch,
     clk_mux,
-    master2_hold,
+    master3_hold,
     master4_hold,
     master5_hold,
-    master2_ex,
+    master3_ex,
     master4_ex,
     master5_ex,
-    master2_RW,
+    master3_RW,
     master4_RW,
     test,
+    BUS,
     master5_RW
 );
-assign test =b_request2;
+
+
+
+wire [3:0] st_arb;
+wire [3:0] st_ms0;
+wire [3:0] st_ms1;
+wire [3:0] st_ms2;
+wire [3:0] st_ms3;
+wire [3:0] st_ms4;
+wire [3:0] st_ms5;
+wire [3:0] st_slv0;
+wire [3:0] st_slv1;
+wire [3:0] st_slv2;
+wire [3:0] st_slv3;
+wire [3:0] st_slv4;
+wire [4:0] st_int0;
+wire [4:0] st_int1;
 bi2bcd test_2(  // Display Current master's slave
-    .din({3'b0,st}), // find a way to find its slave
+    .din({4'b0,st_ms0}), // find a way to find its slave
     .dout2(),
     .dout1(),
     .dout0(hex3)
     );
+
+bi2bcd ssd54(  // Display Current master's slave
+    .din({3'b0,st_int1}), // find a way to find its slave
+    .dout2(),
+    .dout1(hex5),
+    .dout0(hex4)
+    );
+
+
+
 ///////////////////////////////// Parameters ///////////////////////////////
 localparam DATA_WIDTH   = 8;
 localparam ADDRS_WIDTH  = 15;
 localparam TIMEOUT_LEN  = 6; //in bits 4 means 16 clocks
 localparam BIT_LENGTH   = 4; //size of bit_length port 4=> can
-localparam CLK_PERIOD   = 10; //10ns 
-localparam EXAMPLE_DATA = 8'd203;
-localparam EXAMPLE_ADDR = 15'd27306;
+// localparam EXAMPLE_DATA = 8'd203;
+// localparam EXAMPLE_ADDR = 15'd27306;
 
-localparam MSTR2_ADDRS  = {3'd0,12'b0};
-localparam MSTR4_ADDRS  = {3'd4,12'd2564};
-localparam MSTR5_ADDRS  = {3'd4,12'd1500};
+localparam MSTR3_ADDRS  = {3'd4,12'd5};
+localparam MSTR4_ADDRS  = {3'd5,12'd5};
+localparam MSTR5_ADDRS  = {3'd0,12'd5};
 
-localparam MSTR2_DIN    = 8'd231;
+localparam MSTR3_DIN    = 8'd231;
 localparam MSTR4_DIN    = 8'd153;
 localparam MSTR5_DIN    = 8'd29;
 
+localparam SLAVE1_ID    = 3'd1;
+localparam SLAVE2_ID    = 3'd2;
 localparam SLAVE3_ID    = 3'd3;
 localparam SLAVE4_ID    = 3'd4;
 localparam SLAVE5_ID    = 3'd5;
@@ -76,16 +104,17 @@ input rx0;
 input rx1;
 input [2:0] mux_switch; //SW17 SW16 SW15
 input clk_mux;
-input master2_hold;  // SW0
+input master3_hold;  // SW0
 input master4_hold;  // SW2
 input master5_hold;  // SW4
-input master2_ex;    // Key1
+input master3_ex;    // Key1
 input master4_ex;    // Key2
 input master5_ex;    // Key3
-input master2_RW;    // SW1
+input master3_RW;    // SW1
 input master4_RW;    // SW3
 input master5_RW;    // SW5
 
+output BUS;
 output test;
 output tx0;
 output tx1;
@@ -109,7 +138,7 @@ wire                    deb_rstn;
 wire                    clk;
 wire (strong0,weak1)    b_BUS;           // Pullup
 wire (weak0,strong1)    b_RW ;           // Pulldown
-wire (weak0,strong1)    b_bus_utilizing; // Pulldown
+wire (strong0,weak1)    b_bus_utilizing; // Pullup
 wire                    _10MHz;
 wire                    _1Hz;
 wire [20:0]             mux_out;
@@ -118,27 +147,36 @@ wire                    current_m_bsy_mux_out;
 //Bus controller
 wire                  [11:0] m_reqs;
 wire                  [11:0] m_grants;
-wire  (weak0,strong1) [5:0]  slaves;            // Pulldown
+wire                  [5:0]  slave2arbiter;
+wire                  [5:0]  arbiter2slave;
 wire                  [3:0]  mid_current;
 //wire [3:0] state;
 
 
 // Master0 Display master
 wire b_request0;
+wire m_master_bsy0;
 
+// Master1
+wire b_request1;
+wire m_master_bsy1;
 
 // Master2
-wire deb_master2_hold;
-wire deb_master2_ex;
-wire pul_master2_ex;
-wire deb_master2_RW;
-wire [DATA_WIDTH-1:0] m_dout2;
-wire m_dvalid2;
-wire m_master_bsy2;
 wire b_request2;
-wire [6:0] dout0_m2;
-wire [6:0] dout1_m2;
-wire [6:0] dout2_m2;
+wire m_master_bsy2;
+
+// Master3
+wire deb_master3_hold;
+wire deb_master3_ex;
+wire pul_master3_ex;
+wire deb_master3_RW;
+wire [DATA_WIDTH-1:0] m_dout3;
+wire m_dvalid2;
+wire m_master_bsy3;
+wire b_request3;
+wire [6:0] dout0_m3;
+wire [6:0] dout1_m3;
+wire [6:0] dout2_m3;
 
 // Master4
 wire deb_master4_hold;
@@ -167,9 +205,9 @@ wire [6:0] dout1_m5;
 wire [6:0] dout2_m5;
 
 // Slave000 0   display slave
+wire [6:0] dout2_s0;
 wire [6:0] dout0_s0;
 wire [6:0] dout1_s0;
-wire [6:0] dout2_s0;
 
 
 // Slave001 1   Interface slave0 (receive)
@@ -191,51 +229,115 @@ wire [6:0] dout1_s5;
 wire [6:0] dout2_s5;
 
 
+////////////////// testing purpose ////////////
+assign test = clk;
+
+//////////////////////////////////////////////
+
 
 ////////////////////////////// Instantiations //////////////////////////////
 
-/////// Bus controller
+////////// Bus controller  //////////
 bus_controller Bus_Controller(
     .clk(clk),
     .rstn(deb_rstn),
     .m_reqs(m_reqs),
     .m_grants(m_grants),
-    .slaves(slaves),
+    .slaves_in(slave2arbiter),
+    .slaves_out(arbiter2slave),
     .bus_util(b_bus_utilizing),
-    .state(st),//.state(state),
+    .state(st_arb),
     .mid_current(mid_current)
 );
 
-////////////////////////////////// Masters ////////////////////////////////
 
-// Master2
+/////////// Interfaces ///////////////
+
+// Interface 1  (Contains Master1 and Slave1)
+ext_interface #(
+    .SLAVE_ID(SLAVE1_ID),// = 3'b001,
+    .BAUD_SIZE(16'd8),
+    .AD_PREFIX(2'b00)
+    )
+interface_receive(
+    .clk(clk),
+    .rstn(deb_rstn),
+
+    .tx(tx0),
+    .rx(rx0),
+    .bus(b_BUS),
+
+    .b_util(b_bus_utilizing),
+    .slv_state(st_slv1),
+    .mst_state(st_ms1),
+    .intrfc_state(st_int0),
+    .arbiter_cmd_in(arbiter2slave[1]),
+    .busy_out(slave2arbiter[1]),
+    .mst_busy(m_master_bsy1),
+
+    .b_grant(m_grants[1]),
+    .b_request(b_request1),
+    .b_RW(b_RW)
+);
+
+// Interface 2  (Contains Master2 and Slave12)
+ext_interface #(
+    .SLAVE_ID(SLAVE2_ID),// = 3'b010,
+    .BAUD_SIZE(16'd8),
+    .AD_PREFIX(2'b00)
+    )  
+interface_Send(
+    .clk(clk),
+    .rstn(deb_rstn),
+
+    .tx(tx1),
+    .rx(rx1),
+    .bus(b_BUS),
+
+    .b_util(b_bus_utilizing),
+    .slv_state(st_slv2),
+    .mst_state(st_ms2),
+    .intrfc_state(st_int1),
+    .arbiter_cmd_in(arbiter2slave[2]),
+    .busy_out(slave2arbiter[2]),
+    .mst_busy(m_master_bsy2),
+
+    .b_grant(m_grants[2]),
+    .b_request(b_request2),
+    .b_RW(b_RW)
+);
+
+
+////////////// Masters ///////////////
+
+// Master3
 master #(
     .DATA_WIDTH(DATA_WIDTH),
     .ADDRS_WIDTH(ADDRS_WIDTH),
     .TIMEOUT_LEN(TIMEOUT_LEN), //in bits 4 means 16 clocks
     .BIT_LENGTH(BIT_LENGTH)
 )
-master_2(
+master_3(
     .clk(clk),
     .rstn(deb_rstn),
 
-    .m_hold(deb_master2_hold),
-    .m_execute(pul_master2_ex),
-    .m_RW(deb_master2_RW),
-    .m_address(MSTR2_ADDRS),
-    .m_din(MSTR2_DIN),
-    .m_dout(m_dout2),
-    .m_dvalid(m_dvalid2),
-    .m_master_bsy(m_master_bsy2),
+    .m_hold(deb_master3_hold),
+    .m_execute(pul_master3_ex),
+    .m_RW(deb_master3_RW),
+    .m_address(MSTR3_ADDRS),
+    .m_din(MSTR3_DIN),
+    .m_dout(m_dout3),
+    .m_dvalid(m_dvalid3),
+    .m_master_bsy(m_master_bsy3),
 
-    .b_grant(m_grants[2]),
+    .b_grant(m_grants[3]),
     .b_BUS(b_BUS),
-    .b_request(b_request2),
+    .b_request(b_request3),
     .b_RW(b_RW),
-    .state(st2), //remove
+    .state(st_ms3), 
     .b_bus_utilizing(b_bus_utilizing)
 );
-    wire [3:0] st2; //remove
+
 // Master4
 master #(
     .DATA_WIDTH(DATA_WIDTH),
@@ -260,6 +362,7 @@ master_4(
     .b_BUS(b_BUS),
     .b_request(b_request4),
     .b_RW(b_RW),
+    .state(st_ms4),
     .b_bus_utilizing(b_bus_utilizing)
 );
 
@@ -287,10 +390,12 @@ master_5(
     .b_BUS(b_BUS),
     .b_request(b_request5),
     .b_RW(b_RW),
+    .state(st_ms5),
     .b_bus_utilizing(b_bus_utilizing)
 );
 
-//////////////////////////////////// Slaves ////////////////////////////
+
+///////////// Slaves /////////////////
 
 // Slave000 -0
 display_module display_slave000(
@@ -301,18 +406,22 @@ display_module display_slave000(
     .bus_util(b_bus_utilizing),
     .data_bus_serial(b_BUS), 
     .b_RW(b_RW),
-    .slave_busy(slaves[0]),
+    .arbiter_cmd_in(arbiter2slave[0]),
+    .mst_state(st_ms0),
+    .slv_state(st_slv0),
+    .busy_out(slave2arbiter[0]),
 
+    .m_master_bsy(m_master_bsy0),
     .b_request(b_request0),
     .dout0(dout0_s0),
     .dout1(dout1_s0),
     .dout2(dout2_s0)
 );
-//////////////////////////////////////////////////////////////////
+
 
 
 // Slave011 -3
-memory_slave_4k #(
+memory_slave_noip #(
     .ADDRESS_WIDTH(ADDRS_WIDTH),
     .DATA_WIDTH(DATA_WIDTH),
     .SELF_ID(SLAVE3_ID)
@@ -326,15 +435,17 @@ slave_3
 
     .disp_out2(dout2_s3), 
     .disp_out1(dout1_s3), 
-    .disp_out0(dout0_s3),        
+    .disp_out0(dout0_s3), 
+    .state(st_slv3),       
 
     .data_bus_serial(b_BUS), 
-    .slave_busy(slaves[3])
+    .arbiter_cmd_in(arbiter2slave[3]),
+    .busy_out(slave2arbiter[3])
 );
 
 
 // Slave100 -4
-memory_slave_4k #(
+memory_slave_noip #(
     .ADDRESS_WIDTH(ADDRS_WIDTH),
     .DATA_WIDTH(DATA_WIDTH),
     .SELF_ID(SLAVE4_ID)
@@ -348,15 +459,16 @@ slave_4
 
     .disp_out2(dout2_s4), 
     .disp_out1(dout1_s4), 
-    .disp_out0(dout0_s4),        
+    .disp_out0(dout0_s4), 
+    .state(st_slv4),       
 
     .data_bus_serial(b_BUS), 
-    .slave_busy(slaves[4])
+    .arbiter_cmd_in(arbiter2slave[4]),
+    .busy_out(slave2arbiter[4])
 );
 
-
-// Slave101 -5
-memory_slave_2k #(
+// Slave100 -5
+memory_slave_noip #(
     .ADDRESS_WIDTH(ADDRS_WIDTH),
     .DATA_WIDTH(DATA_WIDTH),
     .SELF_ID(SLAVE5_ID)
@@ -370,44 +482,22 @@ slave_5
 
     .disp_out2(dout2_s5), 
     .disp_out1(dout1_s5), 
-    .disp_out0(dout0_s5),        
+    .disp_out0(dout0_s5), 
+    .state(st_slv5),       
 
     .data_bus_serial(b_BUS), 
-    .slave_busy(slaves[5])
+    .arbiter_cmd_in(arbiter2slave[5]),
+    .busy_out(slave2arbiter[5])
 );
 
-// // Slave101 -3
-// slave #(
-//     .ADDRESS_WIDTH(ADDRS_WIDTH),
-//     .DATA_WIDTH(DATA_WIDTH),
-//     .SELF_ID(SLAVE3_ID)
-// )
-// slave_3
-// (
-//     .clk(clk), 
-//     .rstn(deb_rstn), 
-//     .rd_wrt(b_RW), 
-//     .bus_util(b_bus_utilizing), 
-//     .module_dv(sm_dv3),
-//     .data_in_parellel(sm_data3),
-
-//     .write_en_internal(sm_write_en_internal3), //make done bidirectional
-//     .req_int_data(sm_grant_data3),
-//     .data_out_parellel(sm_data_internal3),
-//     .addr_buff(sm_address3),
-
-//     .data_bus_serial(b_BUS), 
-//     .slave_busy(slaves[3])
-// );
-
-// Slave100 -4
 
 
-///////////////////////// Debouncers /////////////////////////////
+
+///////////// Debouncers /////////////////
 debouncer debounce0(
-    .button_in(master2_hold),
+    .button_in(master3_hold),
     .clk(in_clk),
-    .button_out(deb_master2_hold));
+    .button_out(deb_master3_hold));
 
 debouncer debounce1(
     .button_in(master4_hold),
@@ -420,25 +510,25 @@ debouncer debounce2(
     .button_out(deb_master5_hold));
 
 debouncer debounce3(
-    .button_in(master2_ex),
+    .button_in(~master3_ex),
     .clk(in_clk),
-    .button_out(deb_master2_ex));
+    .button_out(deb_master3_ex));
 
 
 debouncer debounce4(
-    .button_in(master4_ex),
+    .button_in(~master4_ex),
     .clk(in_clk),
     .button_out(deb_master4_ex));
     
 debouncer debounce5(
-    .button_in(master5_ex),
+    .button_in(~master5_ex),
     .clk(in_clk),
     .button_out(deb_master5_ex));
 
 debouncer debounce6(
-    .button_in(master2_RW),
+    .button_in(master3_RW),
     .clk(in_clk),
-    .button_out(deb_master2_RW));
+    .button_out(deb_master3_RW));
 
 debouncer debounce7(
     .button_in(master4_RW),
@@ -451,10 +541,10 @@ debouncer debounce8(
     .clk(in_clk),
     .button_out(deb_master5_RW));
 
-// debouncer debounce7(
-//     .button_in(),
-//     .clk(in_clk),
-//     .button_out(deb_));
+debouncer debounce9(
+    .button_in(rstn),
+    .clk(in_clk),
+    .button_out(deb_rstn));
 
 
 // debouncer debounce7(
@@ -465,11 +555,11 @@ debouncer debounce8(
 
 
 
-//////////////////////////// Pulses ////////////////////////////
+//////////////// Pulses /////////////////
 
 pulse pulse0(
-    .din(deb_master2_ex),
-    .dout(pul_master2_ex),
+    .din(deb_master3_ex),
+    .dout(pul_master3_ex),
     .clk(clk),
     .rstn(deb_rstn)
 );
@@ -498,16 +588,8 @@ pulse pulse2(
 
 
 
-
-
-
-
-////////////////////////////////////// Clocks //////////////////////////////////
-// clk_1hz clock_1HZ(
-//     .clk_in, 
-//     .rst,
-//     .clk_1hz_out
-// );
+/////////// Clocks //////////////////////
+ 
 //Convert 10MHz clock to 1Hz clock						
 						
 clock_divider _10MHz_to_1Hz(
@@ -522,7 +604,9 @@ pll _50MHz_to_10MHz(
 .c0(_10MHz));
 
 
-// SSDisplays
+
+///////////// Seven Segment Displays ////////////////
+
 bi2bcd ssd76(  // Display Current master
     .din({4'b0,mid_current}),
     .dout2(),
@@ -530,19 +614,19 @@ bi2bcd ssd76(  // Display Current master
     .dout0(hex6)
     );
 
-bi2bcd ssd54(  // Display Current master's slave
-    .din({4'b0,mid_current}), // find a way to find its slave
-    .dout2(),
-    .dout1(hex5),
-    .dout0(hex4)
-    );
+// bi2bcd ssd54(  // Display Current master's slave
+//     .din({4'b0,mid_current}), // find a way to find its slave
+//     .dout2(),
+//     .dout1(hex5),
+//     .dout0(hex4)
+//     );
 
 // master data decoding
-bi2bcd master_data2(  
-    .din(m_dout2), 
-    .dout2(dout2_m2),
-    .dout1(dout1_m2),
-    .dout0(dout0_m2)
+bi2bcd master_data3(  
+    .din(m_dout3), 
+    .dout2(dout2_m3),
+    .dout1(dout1_m3),
+    .dout0(dout0_m3)
     );
 
 bi2bcd master_data4(  
@@ -559,20 +643,24 @@ bi2bcd master_data5(
     .dout0(dout0_m5)
     );
 
-///////////////////////// Muxes ///////////////////
+//////////////// Muxes ////////////////////
+
+// To rout 3 digit SS Display to slave's/master's written data
 mux_21_8 multiplexer(
-    .data0x({dout2_s0,dout1_s0,dout0_s0}), // Slave 0 output 
-    .data1x({dout2_s3,dout1_s3,dout0_s3}), // Slave 3 output
-    .data2x({dout2_s4,dout1_s4,dout0_s4}), // Slave 4 output
-    .data3x({dout2_s5,dout1_s5,dout0_s5}), // Slave 5 output
-    .data4x({dout2_m2,dout1_m2,dout0_m2}), // Master 2 data 
-    .data5x({dout2_m4,dout1_m4,dout0_m4}), // Master 4 data
-    .data6x({dout2_m5,dout1_m5,dout0_m5}), // Master 5 data
-    .data7x({dout2_s0,dout1_s0,dout0_s0}), // Slave 0 data
+    .data0x({dout2_s0,dout1_s0,dout0_s0}), // Slave 0 output 000
+    .data1x({dout2_s3,dout1_s3,dout0_s3}), // Slave 3 output 001
+    .data2x({dout2_s4,dout1_s4,dout0_s4}), // Slave 4 output 010
+    .data3x({dout2_s5,dout1_s5,dout0_s5}), // Slave 5 output 011
+    .data4x({dout2_m3,dout1_m3,dout0_m3}), // Master 3 data  100
+    .data5x({dout2_m4,dout1_m4,dout0_m4}), // Master 4 data  101
+    .data6x({dout2_m5,dout1_m5,dout0_m5}), // Master 5 data  110
+    .data7x({dout2_s0,dout1_s0,dout0_s0}), // Slave 0 data   111
     .sel(mux_switch),
     .result(mux_out)
 );
 
+
+// To rout the clock between 1Hz and 10MHz
 mux_1_1 clk_multiplexer(
     .data0(_10MHz),
     .data1(_1Hz),
@@ -580,11 +668,12 @@ mux_1_1 clk_multiplexer(
     .result(clk)
 );
 
+// To mux the busy status of the current master
 mux_1_16 current_master_bsy_mux(
-    .data0(1'b0),    
-    .data1(1'b0),
+    .data0(m_master_bsy0),
+    .data1(m_master_bsy1),
     .data2(m_master_bsy2),
-    .data3(1'b0),
+    .data3(m_master_bsy3),
     .data4(m_master_bsy4),
     .data5(m_master_bsy5),
     .data6(1'b0),
@@ -605,25 +694,40 @@ mux_1_16 current_master_bsy_mux(
 
 ///////////////////////////////////////// Assignments //////////////////////////////////
 assign requests         = m_reqs;
-assign utilization      = b_bus_utilizing;
-assign slave_busy       = slaves;
-assign current_m_bsy    = current_m_bsy_mux_out;// {0,0,0,0,0,0,m_master_bsy5,m_master_bsy4,0,m_master_bsy2,0,0}[mid_current];
-assign m_reqs           = {1'b0,1'b0,1'b0,1'b0,1'b0,1'b0,b_request5,b_request4,1'b0,b_request2,1'b0,b_request0};
-assign {hex2,hex1,hex0} = mux_out;//{dout2_s0,dout1_s0,dout0_s0};//?{dout2,dout1,dout0}:{,,};
-// reg [20:0]
-// always@(mux_switch)
-// begin
-//     case(mux_switch)
-//         3'd0: 
-//         3'd1:
-//         3'd2:
-//         3'd3:
-//         3'd4:
-//         3'd5:
-//         3'd6:
-//         3'd7:
-//         default:
-//     endcase
-// end
+assign utilization      = ~b_bus_utilizing;
+assign BUS              = b_BUS;
+
+
+
+// Assigning 0 to free ports .comment connected slaves
+
+// assign slave2arbiter[0] =1'b0;
+// assign slave2arbiter[1] =1'b0;
+// assign slave2arbiter[2] =1'b0;
+// assign slave2arbiter[3] =1'b0;
+// assign slave2arbiter[4] =1'b0;
+// assign slave2arbiter[5] =1'b0;
+
+
+// Connected masters. put b_request<MASTER_ID> for newly connecting masters
+assign m_reqs[0]  = b_request0 ;  // b_request0;    // Master0
+assign m_reqs[1]  = b_request1 ;  // b_request1;    // Master1
+assign m_reqs[2]  = b_request2 ;  // b_request3;    // Master2
+assign m_reqs[3]  = b_request3 ;  // b_request3;    // Master3
+assign m_reqs[4]  = b_request4 ;  // b_request4;    // Master4
+assign m_reqs[5]  = b_request5 ;  // b_request5;    // Master5
+assign m_reqs[6]  = 1'b0       ;  // b_request6;    // Master6
+assign m_reqs[7]  = 1'b0       ;  // b_request7;    // Master7
+assign m_reqs[8]  = 1'b0       ;  // b_request8;    // Master8
+assign m_reqs[9]  = 1'b0       ;  // b_request9;    // Master9
+assign m_reqs[10] = 1'b0       ;  // b_request10;   // Master10
+assign m_reqs[11] = 1'b0       ;  // b_request11;   // Master11
+
+
+
+assign slave_busy = slave2arbiter|arbiter2slave;
+assign current_m_bsy    = current_m_bsy_mux_out;
+assign {hex2,hex1,hex0} = mux_out;
+
 
 endmodule

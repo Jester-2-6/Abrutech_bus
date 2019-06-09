@@ -39,12 +39,12 @@ parameter P3            = 2'b10;
 
 // States
 parameter IDLE          = 4'd0;
-parameter BUSY_SLAVE_1  = 4'd1;
+parameter BUSY_SLAVE_1  = 4'd6;
 parameter BUSY_SLAVE_2  = 4'd2;
 parameter SEARCH_S      = 4'd3;
 parameter SEARCH_P1     = 4'd4;
 parameter SEARCH_P2     = 4'd5;
-parameter SEARCH_P3     = 4'd6;
+parameter SEARCH_P3     = 4'd1;
 parameter FOUND         = 4'd7;
 parameter GRANT_1       = 4'd8;
 parameter GRANT_2       = 4'd9;

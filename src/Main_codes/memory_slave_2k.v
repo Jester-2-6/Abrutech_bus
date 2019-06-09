@@ -1,5 +1,5 @@
 /*
-Module name  : memory_slave.v
+Module name  : memory_slave_4k.v
 Author 	     : C.Wimalasuriya
 Date Modified: 01/06/2019
 Organization : ABruTECH
@@ -14,24 +14,26 @@ module memory_slave_2k #(
     input rstn,
     input rd_wrt,
     input bus_util,
+    input arbiter_cmd_in,
 
+    output wire busy_out,
     output wire [6:0] disp_out2, 
     output wire [6:0] disp_out1, 
     output wire [6:0] disp_out0,        
 
-    inout data_bus_serial, 
-    inout slave_busy
+    inout data_bus_serial
 );
 
     wire [DATA_WIDTH - 1:0]     data_in_parellel;
     wire [DATA_WIDTH - 1:0]     data_out_parellel;
-    wire [ADDRESS_WIDTH -1:0]   addr_out;
+    wire [ADDRESS_WIDTH -1:0]   addr_out_wire;
     wire                        write_en_internal;
     wire                        req_int_data;
 
     reg module_dv   = 1'b0;
 
     reg [DATA_WIDTH - 1:0]      data_out_buff;
+    reg [ADDRESS_WIDTH -1:0]   addr_buff;
 
     slave #(
         .ADDRESS_WIDTH(ADDRESS_WIDTH),
@@ -44,13 +46,14 @@ module memory_slave_2k #(
         .bus_util(bus_util),
         .module_dv(module_dv),
         .data_bus_serial(data_bus_serial),
-        .slave_busy(slave_busy),
+        .arbiter_cmd_in(arbiter_cmd_in),
+        .busy_out(busy_out),
         .data_in_parellel(data_out_buff),
 
         .write_en_internal(write_en_internal),
         .req_int_data(req_int_data),
         .data_out_parellel(data_out_parellel),
-        .addr_buff(addr_out)
+        .addr_buff(addr_out_wire)
     );
 
     bi2bcd display(
@@ -61,7 +64,7 @@ module memory_slave_2k #(
     );
 
     ram_2k ram_inst(
-        .address(addr_out[ADDRESS_WIDTH-4:0]),
+        .address(addr_buff[ADDRESS_WIDTH-4:0]),
         .clock(clk),
         .data(data_out_parellel),
         .wren(write_en_internal),
@@ -75,9 +78,12 @@ module memory_slave_2k #(
 
         end else begin
             if (req_int_data) begin
-                data_out_buff   <= data_in_parellel;
+                addr_buff       <= addr_out_wire;
                 module_dv       <= 1'b1;
 
+            end else if (write_en_internal) begin
+                data_out_buff   <= data_in_parellel;
+                module_dv       <= 1'b1;
             end else module_dv  <= 1'b0;
         end
     end

@@ -1,6 +1,6 @@
 module clock_divider(inclk,ena,clk);
 
-	parameter maxcount=24'd10000000;// input 10MHz clock and output 1Hz clk
+	parameter maxcount=24'd2500000;// input 10MHz clock and output 1Hz clk
 	
 	input inclk;
 	input ena;
