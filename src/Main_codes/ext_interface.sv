@@ -52,7 +52,7 @@ output      b_request;
 inout       b_RW;             // Usually pulldown
 input       arbiter_cmd_in;
 output      busy_out;
-output [3:0] slv_state;
+output [4:0] slv_state;
 output [3:0] mst_state;
 output [4:0] intrfc_state;
 output       mst_busy;
@@ -132,6 +132,7 @@ slave
     .bus_util(b_util), 
     .module_dv(s_in_dv),
     .data_in_parellel(s_in_data),
+    .freeze_sw(1'b0),
 
     .write_en_internal(s_out_dv), //make done bidirectional
     .req_int_data(s_read_req),

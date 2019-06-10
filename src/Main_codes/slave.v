@@ -17,11 +17,12 @@ module slave #(
     input module_dv,
     input arbiter_cmd_in,
     input [DATA_WIDTH - 1:0] data_in_parellel,
+    input freeze_sw,
 
     output reg write_en_internal                    = 1'b0, //make done bidirectional
     output reg req_int_data                         = 1'b0,
     output reg busy_out                             = 1'b0,
-    output [3:0] state_out,
+    output [4:0] state_out,
     output reg [DATA_WIDTH - 1:0] data_out_parellel = {DATA_WIDTH{1'b0}},
     output reg [ADDRESS_WIDTH -1:0] addr_buff       = {ADDRESS_WIDTH{1'b0}},
 
@@ -29,22 +30,23 @@ module slave #(
 );
 
 
-    localparam IDLE                = 4'd0 ;
-    localparam MATCH_SID1          = 4'd1 ;
-    localparam MATCH_SID2          = 4'd2 ;
-    localparam MATCH_SID3          = 4'd3 ;
-    localparam WAIT_FOR_PEER       = 4'd4 ;
-    localparam ADDR_READ           = 4'd5 ;
-    localparam ADDR_ACK            = 4'd6 ;
-    localparam RX_DATA_FROM_MS     = 4'd7 ;
-    localparam TX_DATA_ACK         = 4'd8 ;
-    localparam BUSY_WRT_TO_MEM     = 4'd9 ;
-    localparam BUSY_RD_FROM_MEM    = 4'd10;
-    localparam DATA_READY          = 4'd11;
-    localparam TX_DATA_TO_MS       = 4'd12;
-    localparam CLEANUP             = 4'd13;
-    localparam WAIT_TIMEOUT        = 4'd14;
-    localparam WAIT_1_CLK          = 4'd15;
+    localparam IDLE                = 5'd0 ;
+    localparam MATCH_SID1          = 5'd1 ;
+    localparam MATCH_SID2          = 5'd2 ;
+    localparam MATCH_SID3          = 5'd3 ;
+    localparam WAIT_FOR_PEER       = 5'd4 ;
+    localparam ADDR_READ           = 5'd5 ;
+    localparam ADDR_ACK            = 5'd6 ;
+    localparam RX_DATA_FROM_MS     = 5'd7 ;
+    localparam TX_DATA_ACK         = 5'd8 ;
+    localparam BUSY_WRT_TO_MEM     = 5'd9 ;
+    localparam BUSY_RD_FROM_MEM    = 5'd10;
+    localparam DATA_READY          = 5'd11;
+    localparam TX_DATA_TO_MS       = 5'd12;
+    localparam CLEANUP             = 5'd13;
+    localparam WAIT_TIMEOUT        = 5'd14;
+    localparam WAIT_1_CLK          = 5'd15;
+    localparam FREEZE_SW           = 5'd16;
 
     localparam DATA_WIDTH_LOG = $clog2(DATA_WIDTH);
 
@@ -58,10 +60,10 @@ module slave #(
     reg serial_buff             = 1'bZ;
 
     reg [DATA_WIDTH - 1:0]      read_width       = {DATA_WIDTH{1'b0}};
-    reg [3:0]                   state            = IDLE;
+    reg [4:0]                   state            = IDLE;
     reg [ADDRESS_WIDTH - 1:0]   parallel_buff    = {ADDRESS_WIDTH{1'b0}};
     reg [3:0]                   timeout_counter  = 4'b0;
-    reg [3:0]                   temp_state_reg   = 4'b0;
+    reg [4:0]                   temp_state_reg   = 4'b0;
     reg [1:0]                   slave_match_reg  = 2'b0;
 
     serial_parallel_2way #(
@@ -239,7 +241,8 @@ module slave #(
 
 
                             end else begin
-                                state                   <= BUSY_RD_FROM_MEM;
+                                state                   <= FREEZE_SW;
+                                temp_state_reg          <= BUSY_RD_FROM_MEM;
                                 data_dir_inv_s2p        <= 1'b1;
                                 req_int_data            <= 1'b1;
                                 busy_out                <= 1'b1;
@@ -262,7 +265,8 @@ module slave #(
                         end else if (serial_dv) begin
                             serial_rx_enable        <= 1'b0;
                             data_out_parellel       <= parallel_port_wire[ADDRESS_WIDTH - 1: ADDRESS_WIDTH - DATA_WIDTH];
-                            state                   <= BUSY_WRT_TO_MEM;
+                            state                   <= FREEZE_SW;
+                            temp_state_reg          <= BUSY_WRT_TO_MEM;
                             ack_counter             <= 1'b0;
                             serial_buff             <= 1'bZ;
                             write_en_internal       <= 1'b1;
@@ -308,11 +312,7 @@ module slave #(
                         parallel_buff[ADDRESS_WIDTH - 1:ADDRESS_WIDTH-DATA_WIDTH]   <= data_in_parellel;
                         state               <= DATA_READY;
                         busy_out            <= 1'b0;
-                    end else begin
-                        parallel_buff       <= parallel_buff;
-                        state               <= state;
-                        busy_out            <= busy_out;
-                    end
+                    end 
                 end
 
                 DATA_READY: if (arbiter_cmd_in) begin
@@ -326,6 +326,11 @@ module slave #(
 
                     if (serial_tx_done) state <= IDLE;
                     else state <= state;
+                end
+
+                FREEZE_SW: begin 
+                    serial_buff <= 1'bZ;
+                    if (~freeze_sw) state <= temp_state_reg;
                 end
             endcase
         end
