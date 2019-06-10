@@ -36,9 +36,9 @@ begin
         SAME_PRIORITY:
         begin
             case(MINI_PROCEDURE)
-            _1_RESET:
-            _1_M1:
-            _1_:
+            _1_RESET:        // Bus free
+            _1_M4_REQUESTS:  // M4 request and get accepted
+            _1_M6_REQUESTS:
             _1_:
             _1_:
             _1_:

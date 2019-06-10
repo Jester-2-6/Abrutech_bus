@@ -50,6 +50,8 @@ wire [3:0] st_ms2;
 wire [3:0] st_ms3;
 wire [3:0] st_ms4;
 wire [3:0] st_ms5;
+wire [3:0] st_ms6;
+wire [3:0] st_ms8;
 wire [3:0] st_slv0;
 wire [3:0] st_slv1;
 wire [3:0] st_slv2;
@@ -80,12 +82,16 @@ localparam BIT_LENGTH   = 4; //size of bit_length port 4=> can
 // localparam EXAMPLE_ADDR = 15'd27306;
 
 localparam MSTR3_ADDRS  = {3'd3,12'd5};
-localparam MSTR4_ADDRS  = {3'd5,12'd5};
+localparam MSTR4_ADDRS  = {3'd3,12'd5};
 localparam MSTR5_ADDRS  = {3'd0,12'd5};
+localparam MSTR6_ADDRS  = {3'd3,12'd5};
+localparam MSTR8_ADDRS  = {3'd3,12'd5};
 
 localparam MSTR3_DIN    = 8'd231;
 localparam MSTR4_DIN    = 8'd153;
 localparam MSTR5_DIN    = 8'd3;
+localparam MSTR6_DIN    = 8'd178;
+localparam MSTR8_DIN    = 8'd75;
 
 localparam SLAVE1_ID    = 3'd1;
 localparam SLAVE2_ID    = 3'd2;
@@ -203,6 +209,32 @@ wire b_request5;
 wire [6:0] dout0_m5;
 wire [6:0] dout1_m5;
 wire [6:0] dout2_m5;
+
+// Master6
+wire deb_master6_hold;
+wire deb_master6_ex;
+wire pul_master6_ex;
+wire deb_master6_RW;
+wire [DATA_WIDTH-1:0] m_dout6;
+wire m_dvalid6;
+wire m_master_bsy6;
+wire b_request6;
+wire [6:0] dout0_m6;
+wire [6:0] dout1_m6;
+wire [6:0] dout2_m6;
+
+// Master8
+wire deb_master8_hold;
+wire deb_master8_ex;
+wire pul_master8_ex;
+wire deb_master8_RW;
+wire [DATA_WIDTH-1:0] m_dout8;
+wire m_dvalid8;
+wire m_master_bsy8;
+wire b_request8;
+wire [6:0] dout0_m8;
+wire [6:0] dout1_m8;
+wire [6:0] dout2_m8;
 
 // Slave000 0   display slave
 wire [6:0] dout2_s0;
@@ -389,6 +421,64 @@ master_5(
     .b_request(b_request5),
     .b_RW(b_RW),
     .state(st_ms5),
+    .b_bus_utilizing(b_bus_utilizing)
+);
+
+
+// Master6
+master #(
+    .DATA_WIDTH(DATA_WIDTH),
+    .ADDRS_WIDTH(ADDRS_WIDTH),
+    .TIMEOUT_LEN(TIMEOUT_LEN), //in bits 4 means 16 clocks
+    .BIT_LENGTH(BIT_LENGTH)
+)
+master_6(
+    .clk(clk),
+    .rstn(deb_rstn),
+
+    .m_hold(deb_master6_hold),
+    .m_execute(pul_master6_ex),
+    .m_RW(deb_master6_RW),
+    .m_address(MSTR6_ADDRS),
+    .m_din(MSTR6_DIN),
+    .m_dout(m_dout6),
+    .m_dvalid(m_dvalid6),
+    .m_master_bsy(m_master_bsy6),
+
+    .b_grant(m_grants[6]),
+    .b_BUS(b_BUS),
+    .b_request(b_request6),
+    .b_RW(b_RW),
+    .state(st_ms6),
+    .b_bus_utilizing(b_bus_utilizing)
+);
+
+
+// Master8
+master #(
+    .DATA_WIDTH(DATA_WIDTH),
+    .ADDRS_WIDTH(ADDRS_WIDTH),
+    .TIMEOUT_LEN(TIMEOUT_LEN), //in bits 4 means 16 clocks
+    .BIT_LENGTH(BIT_LENGTH)
+)
+master_8(
+    .clk(clk),
+    .rstn(deb_rstn),
+
+    .m_hold(deb_master8_hold),
+    .m_execute(pul_master8_ex),
+    .m_RW(deb_master8_RW),
+    .m_address(MSTR8_ADDRS),
+    .m_din(MSTR8_DIN),
+    .m_dout(m_dout8),
+    .m_dvalid(m_dvalid8),
+    .m_master_bsy(m_master_bsy8),
+
+    .b_grant(m_grants[8]),
+    .b_BUS(b_BUS),
+    .b_request(b_request8),
+    .b_RW(b_RW),
+    .state(st_ms8),
     .b_bus_utilizing(b_bus_utilizing)
 );
 
@@ -652,7 +742,7 @@ mux_21_8 multiplexer(
     .data4x({dout2_m3,dout1_m3,dout0_m3}), // Master 3 data  100
     .data5x({dout2_m4,dout1_m4,dout0_m4}), // Master 4 data  101
     .data6x({dout2_m5,dout1_m5,dout0_m5}), // Master 5 data  110
-    .data7x({dout2_s0,dout1_s0,dout0_s0}), // Slave 0 data   111
+    .data7x({dout2_m8,dout1_m8,dout0_m8}), // MASTER 8 data   111
     .sel(mux_switch),
     .result(mux_out)
 );
@@ -675,9 +765,9 @@ mux_1_16 current_master_bsy_mux(
     .data3(m_master_bsy3),
     .data4(m_master_bsy4),
     .data5(m_master_bsy5),
-    .data6(1'b0),
+    .data6(m_master_bsy6),
     .data7(1'b0),
-    .data8(1'b0),
+    .data8(m_master_bsy8),
     .data9(1'b0),
     .data10(1'b0),
     .data11(1'b0),
@@ -715,9 +805,9 @@ assign m_reqs[2]  = b_request2 ;  // b_request3;    // Master2
 assign m_reqs[3]  = b_request3 ;  // b_request3;    // Master3
 assign m_reqs[4]  = b_request4 ;  // b_request4;    // Master4
 assign m_reqs[5]  = b_request5 ;  // b_request5;    // Master5
-assign m_reqs[6]  = 1'b0       ;  // b_request6;    // Master6
+assign m_reqs[6]  = b_request6 ;  // b_request6;    // Master6
 assign m_reqs[7]  = 1'b0       ;  // b_request7;    // Master7
-assign m_reqs[8]  = 1'b0       ;  // b_request8;    // Master8
+assign m_reqs[8]  = b_request8 ;  // b_request8;    // Master8
 assign m_reqs[9]  = 1'b0       ;  // b_request9;    // Master9
 assign m_reqs[10] = 1'b0       ;  // b_request10;   // Master10
 assign m_reqs[11] = 1'b0       ;  // b_request11;   // Master11
