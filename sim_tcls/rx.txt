@@ -24,23 +24,25 @@ force -freeze sim:/ext_interface/m_dvalid 1 0
 run 10
 force -freeze sim:/ext_interface/m_dvalid 0 0
 run 200
-#------------ SECOND RX [0011-0011]
+#------------ SECOND RX [1100-1100]
+restart
+force -freeze sim:/ext_interface/clk 1 0, 0 {5 ps} -r 10
 # Baud bit
+force -freeze sim:/ext_interface/rx 1 0
+run 100
 force -freeze sim:/ext_interface/rx 0 0
 run 80
 force -freeze sim:/ext_interface/rx 1 0
 run 200
-# Start bit + addr bit
-force -freeze sim:/ext_interface/rx 1 0
+# Start bit + addr bits
+force -freeze sim:/ext_interface/rx 0 0
 run 240
-force -freeze sim:/ext_interface/rx 0 0
-run 80
 #-- rx data starts
-force -freeze sim:/ext_interface/rx 0 0
-run 160
 force -freeze sim:/ext_interface/rx 1 0
 run 160
 force -freeze sim:/ext_interface/rx 0 0
+run 160
+force -freeze sim:/ext_interface/rx 1 0
 run 160
 force -freeze sim:/ext_interface/rx 1 0
 #-- rx data done
@@ -80,6 +82,7 @@ restart
 force -freeze sim:/ext_interface/clk 1 0, 0 {5 ps} -r 10
 #------------ FIRST TX [10101010]
 force -freeze sim:/ext_interface/s_out_data 10101010 0
+force -freeze sim:/ext_interface/rx 1 0
 run 100
 force -freeze sim:/ext_interface/s_out_dv 1 0
 run 100
@@ -107,7 +110,7 @@ force -freeze sim:/ext_interface/s_out_dv 0 0
 force -freeze sim:/ext_interface/rx 1 0
 run 300
 #------------ THIRD TX [11100011]
-force -freeze sim:/ext_interface/s_out_data 11001100 0
+force -freeze sim:/ext_interface/s_out_data 0000101 0
 run 100
 force -freeze sim:/ext_interface/s_out_dv 1 0
 run 100
