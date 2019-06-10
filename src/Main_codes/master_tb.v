@@ -13,9 +13,9 @@ module master_tb;
 // Parameters
 localparam DATA_WIDTH   = 8;
 localparam ADDRS_WIDTH  = 15;
-localparam TIMEOUT_LEN  = 6; //in bits 4 means 16 clocks
+localparam TIMEOUT_LEN  = 3; //in bits 4 means 16 clocks
 localparam BIT_LENGTH   = 4; //size of bit_length port 4=> can
-localparam CLK_PERIOD   = 10; //10ns 
+localparam CLK_PERIOD   = 100; //100ns 
 localparam EXAMPLE_DATA = 8'd203;
 localparam EXAMPLE_ADDR = 15'd21845;
 
@@ -35,17 +35,18 @@ wire                       m_master_bsy;
 wire     [DATA_WIDTH-1:0]  m_dout;
 // BUS side
 reg                        b_grant     = 1'b0;
-wire    (strong0,weak1)    b_BUS       = 1'b1;            // Master bus. Have to rout the converter inout
+wire    (strong0,weak1)    b_BUS       = 1'b1;   // Master bus. Have to rout the converter inout
 wire                       b_request;
-wire                       b_RW;             // Usually pulldown
-wire                       b_bus_utilizing;  // Usually pulldown
+wire                       b_RW;                 // Usually pulldown
+wire                       b_bus_utilizing;      // Usually pullup
 
+// To simulate slave side responses
 reg                        slave_drive = 1'b0;
 reg                        slave_out   = 1'b1;
 
 
 // General conditions
-pulldown(b_bus_utilizing);
+pullup(b_bus_utilizing);
 pulldown(b_RW);
 // pullup(b_Bus);
 assign b_BUS = slave_drive?slave_out:1'bZ;
@@ -69,7 +70,8 @@ master_0(
     .m_dout(m_dout),
     .m_dvalid(m_dvalid),
     .m_master_bsy(m_master_bsy),
-
+    
+    .state(),
     .b_grant(b_grant),
     .b_BUS(b_BUS),
     .b_request(b_request),
@@ -86,16 +88,6 @@ end
 
 initial
 begin
-    // #(CLK_PERIOD);
-    // rstn        <= 1'b1;
-    // m_hold      <= 1'b0;
-    // m_execute   <= 1'b0;
-    // m_RW        <= 1'b1;
-    // m_address   <= EXAMPLE_ADDR;
-    // m_din       <= EXAMPLE_DATA;
-    // b_grant     <= 1'b0;
-    // slave_drive <= 1'b0;
-    // slave_out   <= 1'b1;
 
     // resetting
     async_reset;
@@ -126,23 +118,24 @@ begin
     @(posedge clk);
     m_execute <= 1'b0;
 
-    // missing 3 tries
-    @(posedge(b_bus_utilizing));
-    @(posedge(b_bus_utilizing));
-    @(negedge(b_request));
-    @(posedge(clk));
-    b_grant <= 1'b0;
+    // // missing 3 tries
+    // @(posedge(b_bus_utilizing));
+    // @(posedge(b_bus_utilizing));
+    // @(negedge(b_request));
+    // @(posedge(clk));
+    // b_grant <= 1'b0;
 
-    @(posedge(clk));
-    @(posedge(clk));
-    @(posedge(clk));
-    @(posedge(clk));
-    b_grant <= 1'b1;
+    // @(posedge(clk));
+    // @(posedge(clk));
+    // @(posedge(clk));
+    // @(posedge(clk));
+    // b_grant <= 1'b1;
 
     // 4th try
+
     // sending ack from slave
-    @(posedge(b_bus_utilizing));
-    pass_clocks(23);
+    // @(posedge(b_bus_utilizing));
+    pass_clocks(25);
 
 
     @(posedge clk);
@@ -183,7 +176,7 @@ begin
     m_execute   <= 1'b0;
     m_RW        <= 1'b0;
     m_address   <= EXAMPLE_ADDR;
-    m_din       <= EXAMPLE_DATA;
+    m_din       <= EXAMPLE_DATA-132;
     b_grant     <= 1'b0;
     slave_drive <= 1'b0;
     slave_out   <= 1'b1;
@@ -199,21 +192,21 @@ begin
     @(posedge clk);
     m_execute <= 1'b0;
 
-    @(posedge(b_bus_utilizing));
-    @(posedge(b_bus_utilizing));
-    @(negedge(b_request));
-    @(posedge(clk));
-    b_grant <= 1'b0;
+    // @(posedge(b_bus_utilizing));
+    // @(posedge(b_bus_utilizing));
+    // @(negedge(b_request));
+    // @(posedge(clk));
+    // b_grant <= 1'b0;
 
-    @(posedge(clk));
-    @(posedge(clk));
-    @(posedge(clk));
-    @(posedge(clk));
-    b_grant <= 1'b1;
+    // @(posedge(clk));
+    // @(posedge(clk));
+    // @(posedge(clk));
+    // @(posedge(clk));
+    // b_grant <= 1'b1;
 
     // sending ack from slave
-    @(posedge(b_bus_utilizing));
-    pass_clocks(36);
+    // @(posedge(b_bus_utilizing));
+    pass_clocks(25);
 
 
     @(posedge clk);
@@ -225,7 +218,7 @@ begin
     slave_drive <= 1'b0;  
     
     @(posedge clk);
-    transmit_data(EXAMPLE_DATA);
+    transmit_data(EXAMPLE_DATA-132);
 
     //done
     @(posedge m_dvalid);

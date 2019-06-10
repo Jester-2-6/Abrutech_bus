@@ -145,4 +145,14 @@ force -freeze sim:/bus_top_module_simulating_v3/master_ex 1 0
 run 100ns
 force -freeze sim:/bus_top_module_simulating_v3/master_ex 0 0
 run 800ns
+
+force -freeze sim:/bus_top_module_simulating_v3/master_ex 1 0
+run 100ns
+force -freeze sim:/bus_top_module_simulating_v3/master_ex 0 0
+run 800ns
+run 5200ns
+force -freeze sim:/bus_top_module_simulating_v3/freeze_slv2 0 0
+run 4800ns
+
+
 */
