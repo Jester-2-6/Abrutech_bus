@@ -1,18 +1,19 @@
 /*
 Module name  : bus_top_module.v
 Author 	     : W.M.R.R.Wickramasinghe
-Date Modified: 06/06/2019
+Date Modified: 10/06/2019
 Organization : ABruTECH
-Description  : Top module containig the arbiter,masters and slaves
+Description  : Top module containig the arbiter,masters,interfaces,display and slaves
 */
 
 module bus_top_module(
     rstn,
     in_clk,
-    tx0,  //handle
-    rx0,  //handle
-    tx1,  //handle
-    rx1,  //handle
+    freeze_slv,
+    tx0,  
+    rx0,  
+    tx1,  
+    rx1,  
     hex0,
     hex1,
     hex2,
@@ -78,7 +79,7 @@ localparam BIT_LENGTH   = 4; //size of bit_length port 4=> can
 // localparam EXAMPLE_DATA = 8'd203;
 // localparam EXAMPLE_ADDR = 15'd27306;
 
-localparam MSTR3_ADDRS  = {3'd4,12'd5};
+localparam MSTR3_ADDRS  = {3'd3,12'd5};
 localparam MSTR4_ADDRS  = {3'd5,12'd5};
 localparam MSTR5_ADDRS  = {3'd0,12'd5};
 
@@ -98,6 +99,7 @@ localparam SLAVE5_ID    = 3'd5;
 
 input in_clk;       
 input rstn;          // Key0
+input freeze_slv;
 input rx0;
 input rx1;
 input [2:0] mux_switch; //SW17 SW16 SW15
@@ -215,6 +217,7 @@ wire [6:0] dout1_s0;
 wire [6:0] dout0_s3;
 wire [6:0] dout1_s3;
 wire [6:0] dout2_s3;
+wire deb_freeze_slv;
 
 // Slave100 4
 wire [6:0] dout0_s4;
@@ -432,7 +435,7 @@ slave_3
     .disp_out1(dout1_s3), 
     .disp_out0(dout0_s3), 
     .state(st_slv3),       
-
+    .freeze_slv(deb_freeze_slv),
     .data_bus_serial(b_BUS), 
     .arbiter_cmd_in(arbiter2slave[3]),
     .busy_out(slave2arbiter[3])
@@ -456,7 +459,7 @@ slave_4
     .disp_out1(dout1_s4), 
     .disp_out0(dout0_s4), 
     .state(st_slv4),       
-
+    .freeze_slv(1'b0),
     .data_bus_serial(b_BUS), 
     .arbiter_cmd_in(arbiter2slave[4]),
     .busy_out(slave2arbiter[4])
@@ -479,7 +482,7 @@ slave_5
     .disp_out1(dout1_s5), 
     .disp_out0(dout0_s5), 
     .state(st_slv5),       
-
+    .freeze_slv(1'b0),
     .data_bus_serial(b_BUS), 
     .arbiter_cmd_in(arbiter2slave[5]),
     .busy_out(slave2arbiter[5])
@@ -542,10 +545,10 @@ debouncer debounce9(
     .button_out(deb_rstn));
 
 
-// debouncer debounce7(
-//     .button_in(),
-//     .clk(in_clk),
-//     .button_out(deb_));
+ debouncer debounce10(
+     .button_in(freeze_slv),
+     .clk(in_clk),
+     .button_out(deb_freeze_slv));
 
 
 

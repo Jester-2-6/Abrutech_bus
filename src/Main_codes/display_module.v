@@ -104,7 +104,7 @@ module display_module(
         .bus_util(bus_util), 
         .module_dv(slave_dv),
         .data_in_parellel(display_buffer),
-
+        .freeze_sw(1'b0),
         .write_en_internal(update_disp),
         .state_out(slv_state),
         .req_int_data(req_int_data),  
