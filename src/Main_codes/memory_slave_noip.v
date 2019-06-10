@@ -15,9 +15,9 @@ module memory_slave_noip #(
     input rd_wrt,
     input bus_util,
     input arbiter_cmd_in,
-
+    input freeze_slv,
     output wire busy_out,
-    output [3:0] state,
+    output [4:0] state,
     output wire [6:0] disp_out2, 
     output wire [6:0] disp_out1, 
     output wire [6:0] disp_out0,        
@@ -51,7 +51,7 @@ module memory_slave_noip #(
         .busy_out(busy_out),
         .data_in_parellel(mem_to_slave_wire),
         .state_out(state),
-
+        .freeze_sw(freeze_slv),
         .write_en_internal(write_en_internal),
         .req_int_data(req_int_data),
         .data_out_parellel(slave_to_mem_wire),

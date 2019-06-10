@@ -52,7 +52,7 @@ output      b_request;
 inout       b_RW;             // Usually pulldown
 input       arbiter_cmd_in;
 output      busy_out;
-output [3:0] slv_state;
+output [4:0] slv_state;
 output [3:0] mst_state;
 output [4:0] intrfc_state;
 output       mst_busy;
@@ -132,6 +132,7 @@ slave
     .bus_util(b_util), 
     .module_dv(s_in_dv),
     .data_in_parellel(s_in_data),
+    .freeze_sw(1'b0),
 
     .write_en_internal(s_out_dv), //make done bidirectional
     .req_int_data(s_read_req),
@@ -180,6 +181,8 @@ always @ (posedge clk, negedge rstn) begin
         s_in_dv         <= 1'b0;
         tx              <= 1; // TX is normally high
         baud_size       <= BAUD_SIZE;
+        buffer          <= 10'b0;
+        baud_size       <= BAUD_SIZE;
         count           <= 16'd1;
         count_0_9       <= 4'd10;
     end
@@ -201,6 +204,8 @@ always @ (posedge clk, negedge rstn) begin
                 tx              <= 1; // TX is normally high
                 baud_size       <= BAUD_SIZE;
                 buffer          <= 10'b0;
+                count           <= 16'd1;
+                count_0_9       <= 4'd10;
                 
                 if      (~rx) begin
                     baud_size   <= 16'd1;
@@ -265,8 +270,7 @@ always @ (posedge clk, negedge rstn) begin
             end
 
             RX_3_RECEIVE_3: begin                       // Recieving
-                if (count_0_9 == 4'd15) begin
-                    // buffer[count_0_9]<= rx;
+                if (count_0_9 == 4'd0) begin
                     count_0_9       <= 4'd1;
                     state           <= RX_4_ACK_1;
                 end
@@ -281,7 +285,7 @@ always @ (posedge clk, negedge rstn) begin
 
             RX_4_ACK_1: begin                       // Wait 1 baud
 
-                if (count_0_9 == 4'd13) begin
+                if (count_0_9 == 4'd0) begin
                     tx              <= 0;
                     m_din           <= buffer[7:0];
                     m_hold          <= 1;
