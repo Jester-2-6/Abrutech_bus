@@ -17,7 +17,7 @@ module memory_slave_noip #(
     input arbiter_cmd_in,
     input freeze_slv,
     output wire busy_out,
-    output [3:0] state,
+    output [4:0] state,
     output wire [6:0] disp_out2, 
     output wire [6:0] disp_out1, 
     output wire [6:0] disp_out0,        

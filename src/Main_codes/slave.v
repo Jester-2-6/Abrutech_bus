@@ -329,6 +329,7 @@ module slave #(
                 end
 
                 FREEZE_SW: begin 
+                    serial_buff <= 1'bZ;
                     if (~freeze_sw) state <= temp_state_reg;
                 end
             endcase

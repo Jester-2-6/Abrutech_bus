@@ -17,7 +17,7 @@ module display_module(
     input arbiter_cmd_in,
 
     output [3:0] mst_state,
-    output [3:0] slv_state,
+    output [4:0] slv_state,
     output busy_out,
     output b_request,
     output m_master_bsy,

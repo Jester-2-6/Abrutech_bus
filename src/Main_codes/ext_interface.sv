@@ -52,7 +52,7 @@ output      b_request;
 inout       b_RW;             // Usually pulldown
 input       arbiter_cmd_in;
 output      busy_out;
-output [3:0] slv_state;
+output [4:0] slv_state;
 output [3:0] mst_state;
 output [4:0] intrfc_state;
 output       mst_busy;
