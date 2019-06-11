@@ -25,7 +25,6 @@ input  wire [11:0]      m_reqs;
 output reg  [11:0]      m_grants = 12'b000000000000;
 input       [5:0]       slaves_in;
 output reg  [5:0]       slaves_out = 6'd0;
-// inout       slave_0, slave_1, slave_2, slave_3, slave_4, slave_5;
 
 // Parameters:
 parameter MID_NONE      = 4'b1111;
@@ -242,27 +241,6 @@ always @ (posedge clk, negedge rstn) begin
                 switch_to_slave <= 0;
                 state           <= FOUND;
             end
-
-            // FOUND: begin
-            //     mid_grant <= MID_NONE;
-                
-            //     if (~bus_util) state <= FOUND;   // Wait until bus is free
-            //     else           state <= GRANT_1;
-            // end
-
-            // GRANT_1: begin
-            //     mid_current <= mid_search;
-            //     mid_grant   <= mid_search;
-            //     mid_search  <= MID_NONE;
-
-            //     state <= GRANT_2;
-            // end
-
-            // GRANT_2: begin
-            //     if      (bus_util)          state <= GRANT_2;  // wait until master picks up the bus
-            //     else if (switch_to_slave)   state <= ACK_SLAVE_1;
-            //     else                        state <= IDLE;
-            // end
 
             FOUND: begin
                 mid_grant <= MID_NONE;
